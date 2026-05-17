@@ -41,7 +41,7 @@ SILF.sln
 ### 1. Clonar el repositorio
 
 ```powershell
-git clone <URL_DEL_REPOSITORIO>
+git clone <https://github.com/claudecorreo2077-commits/SILF0>
 cd SILF
 ```
 
