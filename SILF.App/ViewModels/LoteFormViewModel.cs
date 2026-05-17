@@ -24,14 +24,8 @@ public partial class LoteFormViewModel : BaseViewModel
         TiposMineral = new() { "COMPLEJO", "BROSA" };
     }
 
-    // ══════════════════════════════════════════
-    // PROPIEDADES
-    // ══════════════════════════════════════════
-
     [ObservableProperty] private string _tituloFormulario = "Nuevo Lote";
     [ObservableProperty] private DateTime _formFechaIngreso = DateTime.Today;
-
-    // Proveedor
     [ObservableProperty] private string _formCiNit = "";
     [ObservableProperty] private string _formNombreProveedor = "";
     [ObservableProperty] private bool _mostrarSugerencias;
@@ -43,35 +37,27 @@ public partial class LoteFormViewModel : BaseViewModel
         set { if (SetProperty(ref _proveedorSugerido, value) && value != null) SeleccionarProveedor(value); }
     }
 
-    // Catálogos
     public ObservableCollection<Cooperativa> Cooperativas { get; } = new();
     public ObservableCollection<Mina> Minas { get; } = new();
     [ObservableProperty] private Cooperativa? _formCooperativa;
     [ObservableProperty] private Mina? _formMina;
 
-    // Tipo
     public List<string> TiposMineral { get; }
     [ObservableProperty] private string? _formTipoMineral;
 
-    // Pesos
     [ObservableProperty] private decimal _formPesoBruto;
     [ObservableProperty] private decimal _formTara;
     [ObservableProperty] private decimal _formPesoNeto;
     partial void OnFormPesoBrutoChanged(decimal value) => FormPesoNeto = value - FormTara;
     partial void OnFormTaraChanged(decimal value) => FormPesoNeto = FormPesoBruto - value;
 
-    // Transporte
     [ObservableProperty] private string _formChofer = "";
     [ObservableProperty] private string _formCiChofer = "";
     [ObservableProperty] private string _formPlaca = "";
     [ObservableProperty] private string _formTicket = "";
-
-    // ── NUEVOS: Anticipo, Bono, Visible ──
     [ObservableProperty] private decimal _formAnticipo;
     [ObservableProperty] private decimal _formBonoTransporte;
     [ObservableProperty] private bool _formVisible = true;
-
-    // Otros
     [ObservableProperty] private string _formObservaciones = "";
     [ObservableProperty] private string _mensajeError = "";
     [ObservableProperty] private bool _tieneError;
@@ -94,10 +80,7 @@ public partial class LoteFormViewModel : BaseViewModel
     {
         using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
-        var lote = await db.Lotes
-            .Include(l => l.Proveedor)
-            .Include(l => l.Pago)
-            .Include(l => l.BonoTransporte)
+        var lote = await db.Lotes.Include(l => l.Proveedor).Include(l => l.Pago).Include(l => l.BonoTransporte)
             .FirstOrDefaultAsync(l => l.Id == loteId);
         if (lote == null) return;
 
@@ -110,41 +93,73 @@ public partial class LoteFormViewModel : BaseViewModel
         FormCooperativa = Cooperativas.FirstOrDefault(c => c.Id == lote.Proveedor.CooperativaId);
         FormMina = Minas.FirstOrDefault(m => m.Id == lote.MinaId);
         FormTipoMineral = lote.TipoMineral?.ToString()?.ToUpper();
-        FormPesoBruto = lote.PesoBruto;
-        FormTara = lote.Tara;
-        FormChofer = lote.NombreChofer ?? "";
-        FormCiChofer = lote.CiChofer ?? "";
-        FormPlaca = lote.Placa ?? "";
-        FormTicket = lote.Ticket ?? "";
-        FormObservaciones = lote.Observaciones ?? "";
-        FormVisible = lote.Visible;
+        FormPesoBruto = lote.PesoBruto; FormTara = lote.Tara;
+        FormChofer = lote.NombreChofer ?? ""; FormCiChofer = lote.CiChofer ?? "";
+        FormPlaca = lote.Placa ?? ""; FormTicket = lote.Ticket ?? "";
+        FormObservaciones = lote.Observaciones ?? ""; FormVisible = lote.Visible;
         FormAnticipo = lote.Pago?.Anticipo ?? 0;
         FormBonoTransporte = lote.BonoTransporte?.Monto ?? 0;
     }
 
     // ══════════════════════════════════════════
-    // AUTOCOMPLETADO
+    // PROVEEDORES: DROPDOWN + AUTOCOMPLETADO
     // ══════════════════════════════════════════
 
+    /// <summary>Muestra todos los proveedores al hacer clic en el campo CI/NIT.</summary>
+    [RelayCommand]
+    private async Task MostrarTodosProveedoresAsync()
+    {
+        try
+        {
+            using var scope = App.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+
+            var todos = await db.Proveedores.Include(p => p.Cooperativa)
+                .Where(p => p.Activo)
+                .OrderBy(p => p.NombreCompleto)
+                .Take(20)
+                .Select(p => new ProveedorSugerencia
+                {
+                    Id = p.Id, NombreCompleto = p.NombreCompleto, CiNit = p.CiNit,
+                    CooperativaNombre = p.Cooperativa != null ? p.Cooperativa.Nombre : "",
+                    CooperativaId = p.CooperativaId
+                }).ToListAsync();
+
+            SugerenciasProveedor.Clear();
+            foreach (var r in todos) SugerenciasProveedor.Add(r);
+            MostrarSugerencias = SugerenciasProveedor.Count > 0;
+        }
+        catch { }
+    }
+
+    /// <summary>Filtra proveedores mientras el usuario escribe.</summary>
     [RelayCommand]
     private async Task BuscarProveedorAsync()
     {
-        if (string.IsNullOrWhiteSpace(FormCiNit) || FormCiNit.Length < 2)
+        if (string.IsNullOrWhiteSpace(FormCiNit) || FormCiNit.Length < 1)
         { SugerenciasProveedor.Clear(); MostrarSugerencias = false; return; }
+
         try
         {
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
             var txt = FormCiNit.ToUpper();
+
             var res = await db.Proveedores.Include(p => p.Cooperativa)
                 .Where(p => p.Activo && (p.CiNit.ToUpper().Contains(txt) || p.NombreCompleto.ToUpper().Contains(txt)))
-                .Take(8).Select(p => new ProveedorSugerencia
-                { Id = p.Id, NombreCompleto = p.NombreCompleto, CiNit = p.CiNit,
-                  CooperativaNombre = p.Cooperativa != null ? p.Cooperativa.Nombre : "", CooperativaId = p.CooperativaId })
-                .ToListAsync();
-            SugerenciasProveedor.Clear(); foreach (var r in res) SugerenciasProveedor.Add(r);
+                .Take(10)
+                .Select(p => new ProveedorSugerencia
+                {
+                    Id = p.Id, NombreCompleto = p.NombreCompleto, CiNit = p.CiNit,
+                    CooperativaNombre = p.Cooperativa != null ? p.Cooperativa.Nombre : "",
+                    CooperativaId = p.CooperativaId
+                }).ToListAsync();
+
+            SugerenciasProveedor.Clear();
+            foreach (var r in res) SugerenciasProveedor.Add(r);
             MostrarSugerencias = SugerenciasProveedor.Count > 0;
-        } catch { }
+        }
+        catch { }
     }
 
     private void SeleccionarProveedor(ProveedorSugerencia p)
@@ -168,8 +183,8 @@ public partial class LoteFormViewModel : BaseViewModel
         if (string.IsNullOrWhiteSpace(FormTipoMineral)) { MostrarErr("Seleccione el tipo de mineral."); return; }
         if (FormPesoBruto <= 0) { MostrarErr("El peso bruto debe ser mayor a 0."); return; }
         if (FormPesoNeto <= 0) { MostrarErr("El peso neto debe ser mayor a 0."); return; }
-        if (FormAnticipo <= 0) { MostrarErr("El anticipo es obligatorio y debe ser mayor a 0."); return; }
-        if (FormBonoTransporte <= 0) { MostrarErr("El bono de transporte es obligatorio y debe ser mayor a 0."); return; }
+        if (FormAnticipo <= 0) { MostrarErr("El anticipo es obligatorio."); return; }
+        if (FormBonoTransporte <= 0) { MostrarErr("El bono de transporte es obligatorio."); return; }
 
         Cargando = true;
         try
@@ -177,7 +192,6 @@ public partial class LoteFormViewModel : BaseViewModel
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
 
-            // Resolver proveedor
             int provId;
             if (_proveedorSeleccionadoId.HasValue) { provId = _proveedorSeleccionadoId.Value; }
             else
@@ -190,7 +204,6 @@ public partial class LoteFormViewModel : BaseViewModel
 
             if (_loteEditandoId.HasValue)
             {
-                // ── EDITAR ──
                 var lote = await db.Lotes.Include(l => l.Pago).Include(l => l.BonoTransporte)
                     .FirstOrDefaultAsync(l => l.Id == _loteEditandoId.Value);
                 if (lote != null)
@@ -201,20 +214,15 @@ public partial class LoteFormViewModel : BaseViewModel
                     lote.Placa = FormPlaca.Trim().ToUpper(); lote.Ticket = FormTicket.Trim();
                     lote.Observaciones = FormObservaciones.Trim(); lote.Visible = FormVisible;
 
-                    if (lote.Pago != null)
-                    { lote.Pago.Anticipo = FormAnticipo; lote.Pago.FechaAnticipo = FormFechaIngreso; }
-                    else
-                    { db.Pagos.Add(new Pago { LoteId = lote.Id, Anticipo = FormAnticipo, FechaAnticipo = FormFechaIngreso }); }
+                    if (lote.Pago != null) { lote.Pago.Anticipo = FormAnticipo; lote.Pago.FechaAnticipo = FormFechaIngreso; }
+                    else { db.Pagos.Add(new Pago { LoteId = lote.Id, Anticipo = FormAnticipo, FechaAnticipo = FormFechaIngreso }); }
 
-                    if (lote.BonoTransporte != null)
-                    { lote.BonoTransporte.Monto = FormBonoTransporte; }
-                    else
-                    { db.BonosTransporte.Add(new BonoTransporte { LoteId = lote.Id, Monto = FormBonoTransporte, Fecha = FormFechaIngreso }); }
+                    if (lote.BonoTransporte != null) { lote.BonoTransporte.Monto = FormBonoTransporte; }
+                    else { db.BonosTransporte.Add(new BonoTransporte { LoteId = lote.Id, Monto = FormBonoTransporte, Fecha = FormFechaIngreso }); }
                 }
             }
             else
             {
-                // ── NUEVO ──
                 var ult = await db.Lotes.MaxAsync(l => (int?)l.NumeroLote) ?? 0;
                 var lote = new Lote
                 {
@@ -224,24 +232,10 @@ public partial class LoteFormViewModel : BaseViewModel
                     Placa = FormPlaca.Trim().ToUpper(), Ticket = FormTicket.Trim(),
                     Observaciones = FormObservaciones.Trim(), Estado = EstadoLote.Registrado, Visible = FormVisible
                 };
-                db.Lotes.Add(lote);
-                await db.SaveChangesAsync(); // Para obtener el Id del lote
+                db.Lotes.Add(lote); await db.SaveChangesAsync();
 
-                // Crear Pago con anticipo
-                db.Pagos.Add(new Pago
-                {
-                    LoteId = lote.Id,
-                    Anticipo = FormAnticipo,
-                    FechaAnticipo = FormFechaIngreso
-                });
-
-                // Crear Bono Transporte
-                db.BonosTransporte.Add(new BonoTransporte
-                {
-                    LoteId = lote.Id,
-                    Monto = FormBonoTransporte,
-                    Fecha = FormFechaIngreso
-                });
+                db.Pagos.Add(new Pago { LoteId = lote.Id, Anticipo = FormAnticipo, FechaAnticipo = FormFechaIngreso });
+                db.BonosTransporte.Add(new BonoTransporte { LoteId = lote.Id, Monto = FormBonoTransporte, Fecha = FormFechaIngreso });
             }
 
             await db.SaveChangesAsync();
@@ -251,8 +245,7 @@ public partial class LoteFormViewModel : BaseViewModel
         finally { Cargando = false; }
     }
 
-    [RelayCommand]
-    private void Cancelar() => OnCancelado?.Invoke();
+    [RelayCommand] private void Cancelar() => OnCancelado?.Invoke();
 
     // ══════════════════════════════════════════
     // CATÁLOGOS
@@ -288,8 +281,7 @@ public partial class LoteFormViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
-    private void AgregarProveedor() { _proveedorSeleccionadoId = null; FormNombreProveedor = ""; }
+    [RelayCommand] private void AgregarProveedor() { _proveedorSeleccionadoId = null; FormNombreProveedor = ""; }
 
     private void MostrarErr(string m) { MensajeError = m; TieneError = true; }
 }

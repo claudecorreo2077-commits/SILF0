@@ -30,7 +30,6 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}"/>
             <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
-            <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
         </Style>
 
         <Style x:Key="AddBtn" TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
@@ -70,12 +69,13 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- ═══ DATOS GENERALES ═══ -->
                 <TextBlock Grid.Row="0" Grid.ColumnSpan="5" Style="{StaticResource SectionTitle}" Text="Datos Generales"/>
 
-                <!-- Fecha + Tipo + Visible -->
                 <StackPanel Grid.Row="1" Grid.Column="0">
                     <TextBlock Style="{StaticResource FL}" Text="Fecha de Ingreso"/>
                     <DatePicker FontSize="13" SelectedDate="{Binding FormFechaIngreso}"
@@ -92,7 +92,7 @@
                 <StackPanel Grid.Row="1" Grid.Column="4" VerticalAlignment="Bottom" Margin="0,0,0,8">
                     <CheckBox IsChecked="{Binding FormVisible}" FontSize="13"
                               Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
-                              Content="Visible en reportes" ToolTip="Si está desmarcado, el lote se oculta de los reportes oficiales"/>
+                              Content="Visible en reportes" ToolTip="Desmarcar para ocultar de reportes oficiales"/>
                 </StackPanel>
 
                 <!-- ═══ PROVEEDOR ═══ -->
@@ -100,13 +100,13 @@
                         Background="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"/>
                 <TextBlock Grid.Row="3" Grid.ColumnSpan="5" Style="{StaticResource SectionTitle}" Text="Proveedor"/>
 
-                <!-- CI/NIT + Nombre + Cooperativa -->
                 <StackPanel Grid.Row="4" Grid.Column="0">
                     <TextBlock Style="{StaticResource FL}" Text="CI / NIT"/>
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                        <TextBox x:Name="TxtCiNit" Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Buscar"
-                                 Text="{Binding FormCiNit, UpdateSourceTrigger=PropertyChanged}" TextChanged="TxtCiNit_TextChanged"/>
+                        <TextBox x:Name="TxtCiNit" Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Buscar o seleccionar"
+                                 Text="{Binding FormCiNit, UpdateSourceTrigger=PropertyChanged}"
+                                 TextChanged="TxtCiNit_TextChanged" GotFocus="TxtCiNit_GotFocus"/>
                         <Button Grid.Column="1" Style="{StaticResource AddBtn}" Margin="4,0,0,0" Command="{Binding AgregarProveedorCommand}">
                             <materialDesign:PackIcon Kind="AccountPlus" Width="20" Height="20"/>
                         </Button>
@@ -130,33 +130,46 @@
                     </Grid>
                 </StackPanel>
 
-                <!-- Popup autocompletado -->
+                <!-- Popup proveedores -->
                 <Popup Grid.Row="4" PlacementTarget="{Binding ElementName=TxtCiNit}" Placement="Bottom"
                        StaysOpen="False" AllowsTransparency="True" IsOpen="{Binding MostrarSugerencias, Mode=TwoWay}">
                     <Border Background="{DynamicResource MaterialDesign.Brush.Background}" CornerRadius="8"
                             BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}" BorderThickness="1"
-                            MaxHeight="200" MinWidth="300">
+                            MaxHeight="250" MinWidth="340">
                         <Border.Effect><DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.25" Color="Black"/></Border.Effect>
-                        <ListBox ItemsSource="{Binding SugerenciasProveedor}" SelectedItem="{Binding ProveedorSugerido}"
-                                 Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Margin="8,4">
-                                        <TextBlock FontWeight="SemiBold"><Run Text="{Binding CiNit}"/><Run Text=" — "/><Run Text="{Binding NombreCompleto}"/></TextBlock>
-                                        <TextBlock Text="{Binding CooperativaNombre}" FontSize="11" Opacity="0.6"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Proveedores registrados" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource MaterialDesign.Brush.Primary}" Margin="12,8,12,4"/>
+                            <ListBox Grid.Row="1" ItemsSource="{Binding SugerenciasProveedor}" SelectedItem="{Binding ProveedorSugerido}"
+                                     Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="4,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="90"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding CiNit}" FontWeight="SemiBold" Foreground="{DynamicResource MaterialDesign.Brush.Primary}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding NombreCompleto}" Margin="8,0,0,0"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding CooperativaNombre}" FontSize="11" Opacity="0.5" Margin="8,0,0,0"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
                     </Border>
                 </Popup>
 
-                <!-- ═══ MINERAL Y PESOS ═══ -->
+                <!-- ═══ MINA Y PESOS ═══ -->
                 <Border Grid.Row="5" Grid.ColumnSpan="5" Margin="0,16,0,8" Height="1"
                         Background="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"/>
                 <TextBlock Grid.Row="6" Grid.ColumnSpan="5" Style="{StaticResource SectionTitle}" Text="Mina y Pesos"/>
 
-                <!-- Mina + Peso Bruto + Tara -->
                 <StackPanel Grid.Row="7" Grid.Column="0">
                     <TextBlock Style="{StaticResource FL}" Text="Mina / Paraje"/>
                     <Grid>
@@ -180,19 +193,17 @@
                              Text="{Binding FormTara, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"/>
                 </StackPanel>
 
-                <!-- Peso Neto (solo lectura) -->
                 <StackPanel Grid.Row="8" Grid.Column="0" Margin="0,10,0,0">
                     <TextBlock Style="{StaticResource FL}" Text="Peso Neto (kg)" FontWeight="Bold" Opacity="0.9"/>
                     <TextBox Style="{StaticResource FI}" IsReadOnly="True" FontWeight="Bold" FontSize="16"
                              Foreground="#66BB6A" Text="{Binding FormPesoNeto, Mode=OneWay, StringFormat=N2}"/>
                 </StackPanel>
 
-                <!-- ═══ TRANSPORTE ═══ -->
+                <!-- ═══ TRANSPORTE Y PAGOS ═══ -->
                 <Border Grid.Row="9" Grid.ColumnSpan="5" Margin="0,16,0,8" Height="1"
                         Background="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"/>
                 <TextBlock Grid.Row="10" Grid.ColumnSpan="5" Style="{StaticResource SectionTitle}" Text="Transporte y Pagos"/>
 
-                <!-- Chofer + CI + Placa -->
                 <StackPanel Grid.Row="11" Grid.Column="0">
                     <TextBlock Style="{StaticResource FL}" Text="Nombre del Chofer"/>
                     <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Nombre completo"
@@ -209,7 +220,6 @@
                              Text="{Binding FormPlaca, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
 
-                <!-- Ticket + Anticipo + Bono Transporte -->
                 <StackPanel Grid.Row="12" Grid.Column="0" Margin="0,10,0,0">
                     <TextBlock Style="{StaticResource FL}" Text="Nº Ticket"/>
                     <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Número"
@@ -227,36 +237,35 @@
                              Text="{Binding FormBonoTransporte, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"
                              FontWeight="SemiBold" Foreground="#FFA726"/>
                 </StackPanel>
+
+                <!-- ═══ OBSERVACIONES (campo normal, ancho completo) ═══ -->
+                <Border Grid.Row="13" Grid.ColumnSpan="5" Margin="0,16,0,8" Height="1"
+                        Background="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"/>
+                <StackPanel Grid.Row="14" Grid.ColumnSpan="5">
+                    <TextBlock Style="{StaticResource FL}" Text="Observaciones"/>
+                    <TextBox Style="{StaticResource FI}" Height="70" TextWrapping="Wrap" AcceptsReturn="True"
+                             materialDesign:HintAssist.Hint="Notas adicionales sobre el lote (opcional)"
+                             VerticalContentAlignment="Top"
+                             Text="{Binding FormObservaciones, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
             </Grid>
         </ScrollViewer>
 
-        <!-- ═══ FOOTER ═══ -->
-        <Grid Grid.Row="1" Margin="0,16,0,4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Observaciones a la izquierda -->
-            <TextBox Grid.Column="0" Style="{StaticResource FI}" Height="44" TextWrapping="Wrap"
-                     materialDesign:HintAssist.Hint="Observaciones (opcional)" Margin="0,0,20,0"
-                     Text="{Binding FormObservaciones, UpdateSourceTrigger=PropertyChanged}"/>
-
-            <!-- Botones a la derecha -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="{Binding MensajeError}" Foreground="#E57373" FontSize="12" VerticalAlignment="Center"
-                           Margin="0,0,16,0" Visibility="{Binding TieneError, Converter={StaticResource BoolToVis}}"/>
-                <Button Content="Cancelar" Margin="0,0,12,0"
-                        Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding CancelarCommand}"/>
-                <Button Command="{Binding GuardarCommand}"
-                        Style="{StaticResource MaterialDesignRaisedButton}"
-                        Background="{DynamicResource MaterialDesign.Brush.Primary}">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Guardar Lote" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </Grid>
+        <!-- ═══ FOOTER: ERROR + BOTONES ═══ -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,4">
+            <TextBlock Text="{Binding MensajeError}" Foreground="#E57373" FontSize="12" VerticalAlignment="Center"
+                       Margin="0,0,16,0" MaxWidth="400" TextWrapping="Wrap"
+                       Visibility="{Binding TieneError, Converter={StaticResource BoolToVis}}"/>
+            <Button Content="Cancelar" Margin="0,0,12,0"
+                    Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding CancelarCommand}"/>
+            <Button Command="{Binding GuardarCommand}"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Background="{DynamicResource MaterialDesign.Brush.Primary}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Guardar Lote" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
     </Grid>
 </UserControl>

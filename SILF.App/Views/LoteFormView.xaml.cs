@@ -18,12 +18,16 @@ public partial class LoteFormView : UserControl
             vm.BuscarProveedorCommand.Execute(null);
     }
 
+    private void TxtCiNit_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is LoteFormViewModel vm)
+            vm.MostrarTodosProveedoresCommand.Execute(null);
+    }
+
     private void NumericField_GotFocus(object sender, RoutedEventArgs e)
     {
         if (sender is TextBox tb)
-        {
             tb.Dispatcher.BeginInvoke(() => tb.SelectAll(),
                 System.Windows.Threading.DispatcherPriority.Input);
-        }
     }
 }
