@@ -26,3 +26,6 @@ Thumbs.db
 ## Build
 publish/
 _temp/
+
+*.pdf
+*.xlsx
