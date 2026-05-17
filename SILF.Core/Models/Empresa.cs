@@ -29,6 +29,10 @@ public class Empresa
     [MaxLength(500)]
     public string? LogoPath { get; set; }
 
+    /// <summary>Nombre del liquidador para firmas en reportes PDF.</summary>
+    [MaxLength(200)]
+    public string? NombreLiquidador { get; set; }
+
     /// <summary>Tipo de cambio USD → Bs. Se usa en liquidaciones.</summary>
     [Column(TypeName = "decimal(8,4)")]
     public decimal TipoCambio { get; set; } = 6.97m;

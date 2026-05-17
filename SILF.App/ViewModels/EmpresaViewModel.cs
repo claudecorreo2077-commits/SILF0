@@ -16,6 +16,7 @@ public partial class EmpresaViewModel : BaseViewModel
     [ObservableProperty] private string _empTelefono = string.Empty;
     [ObservableProperty] private string _empMunicipio = string.Empty;
     [ObservableProperty] private string _empIngenio = string.Empty;
+    [ObservableProperty] private string _empNombreLiquidador = string.Empty;
     [ObservableProperty] private string? _empLogoPath;
     [ObservableProperty] private decimal _tipoCambio = 6.97m;
     [ObservableProperty] private string _mensaje = string.Empty;
@@ -37,6 +38,7 @@ public partial class EmpresaViewModel : BaseViewModel
         EmpTelefono = emp.Telefono ?? string.Empty;
         EmpMunicipio = emp.Municipio ?? string.Empty;
         EmpIngenio = emp.Ingenio ?? string.Empty;
+        EmpNombreLiquidador = emp.NombreLiquidador ?? string.Empty;
         EmpLogoPath = emp.LogoPath;
         TipoCambio = emp.TipoCambio;
     }
@@ -79,6 +81,7 @@ public partial class EmpresaViewModel : BaseViewModel
         emp.Telefono = string.IsNullOrWhiteSpace(EmpTelefono) ? null : EmpTelefono.Trim();
         emp.Municipio = string.IsNullOrWhiteSpace(EmpMunicipio) ? null : EmpMunicipio.Trim();
         emp.Ingenio = string.IsNullOrWhiteSpace(EmpIngenio) ? null : EmpIngenio.Trim();
+        emp.NombreLiquidador = string.IsNullOrWhiteSpace(EmpNombreLiquidador) ? null : EmpNombreLiquidador.Trim();
         emp.LogoPath = EmpLogoPath;
         emp.TipoCambio = TipoCambio;
 

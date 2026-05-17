@@ -1,0 +1,172 @@
+<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\LiquidacionListView.xaml -->
+<UserControl x:Class="SILF.App.Views.LiquidacionListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <md:BooleanToVisibilityConverter x:Key="InverseBoolToVis" TrueValue="Collapsed" FalseValue="Visible"/>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- BARRA SUPERIOR -->
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ComboBox Grid.Column="0" ItemsSource="{Binding FiltrosEstado}" SelectedItem="{Binding FiltroEstado}"
+                      Style="{StaticResource MaterialDesignOutlinedComboBox}" md:HintAssist.Hint="Estado"
+                      md:HintAssist.FloatingScale="0.8" Margin="0,0,8,0"/>
+
+            <TextBox Grid.Column="1" Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     md:HintAssist.Hint="Buscar por proveedor, mina, CI/NIT..."
+                     md:TextFieldAssist.HasLeadingIcon="True" md:TextFieldAssist.LeadingIcon="Magnify"
+                     Margin="0,0,8,0"/>
+
+            <Button Grid.Column="2" Content="Excel" Command="{Binding ExportarExcelCommand}"
+                    Style="{StaticResource MaterialDesignOutlinedButton}" md:ButtonAssist.CornerRadius="6"
+                    Padding="16,6" Margin="0,0,8,0">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="FileExcel" Width="18" Height="18" Margin="0,0,6,0"/>
+                            <TextBlock Text="Excel" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Button.ContentTemplate>
+            </Button>
+
+            <Button Grid.Column="3" Command="{Binding LiquidarCommand}" CommandParameter="{x:Null}"
+                    Style="{StaticResource MaterialDesignRaisedButton}" md:ButtonAssist.CornerRadius="6"
+                    Padding="16,6" IsEnabled="False" Visibility="Collapsed"/>
+        </Grid>
+
+        <!-- TABLA -->
+        <md:Card md:ElevationAssist.Elevation="Dp1" Padding="0">
+            <DataGrid ItemsSource="{Binding ItemsView}" AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False"
+                      HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                      SelectionMode="Single" SelectionUnit="FullRow"
+                      Style="{StaticResource MaterialDesignDataGrid}"
+                      RowStyle="{StaticResource MaterialDesignDataGridRow}"
+                      CellStyle="{StaticResource MaterialDesignDataGridCell}"
+                      ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="N°" Binding="{Binding NumeroLote}" Width="50"/>
+                    <DataGridTextColumn Header="PROVEEDOR" Binding="{Binding Proveedor}" Width="*"/>
+                    <DataGridTextColumn Header="MINA" Binding="{Binding Mina}" Width="100"/>
+                    <DataGridTextColumn Header="PESO NETO" Binding="{Binding PesoNeto, StringFormat='{}{0:N2}'}" Width="100">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/></Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="TIPO" Binding="{Binding TipoMineral}" Width="80"/>
+
+                    <!-- LÍQ. PAGABLE -->
+                    <DataGridTemplateColumn Header="LÍQ. PAGABLE" Width="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock HorizontalAlignment="Right" Margin="0,0,8,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="{Binding LiquidoPagable, StringFormat='Bs {0:N2}'}"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TieneLiquidacion}" Value="False">
+                                                    <Setter Property="Text" Value="—"/>
+                                                    <Setter Property="FontWeight" Value="Normal"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- ESTADO -->
+                    <DataGridTemplateColumn Header="ESTADO" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="10" Padding="8,3" HorizontalAlignment="Left">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#FFF3E0"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TieneLiquidacion}" Value="True">
+                                                    <Setter Property="Background" Value="#E8F5E9"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock FontSize="11" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Pendiente"/>
+                                                <Setter Property="Foreground" Value="#E65100"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TieneLiquidacion}" Value="True">
+                                                        <Setter Property="Text" Value="Liquidado"/>
+                                                        <Setter Property="Foreground" Value="#2E7D32"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- FECHA -->
+                    <DataGridTextColumn Header="FECHA" Binding="{Binding Fecha, StringFormat='{}{0:dd/MM/yyyy}'}" Width="90"/>
+
+                    <!-- ACCIONES -->
+                    <DataGridTemplateColumn Header="ACCIONES" Width="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <!-- Pendiente: solo botón Liquidar -->
+                                    <Button ToolTip="Liquidar" Command="{Binding DataContext.LiquidarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding LoteId}" Style="{StaticResource MaterialDesignIconButton}"
+                                            Width="30" Height="30"
+                                            Visibility="{Binding TieneLiquidacion, Converter={StaticResource InverseBoolToVis}}">
+                                        <md:PackIcon Kind="Calculator" Width="18" Height="18" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                    </Button>
+                                    <!-- Liquidado: Ver, PDF, Imprimir, Eliminar -->
+                                    <StackPanel Orientation="Horizontal" Visibility="{Binding TieneLiquidacion, Converter={StaticResource BoolToVis}}">
+                                        <Button ToolTip="Ver / Editar" Command="{Binding DataContext.VerEditarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding LoteId}" Style="{StaticResource MaterialDesignIconButton}" Width="30" Height="30">
+                                            <md:PackIcon Kind="EyeOutline" Width="18" Height="18"/>
+                                        </Button>
+                                        <Button ToolTip="Exportar PDF" Command="{Binding DataContext.ExportarPdfCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding LoteId}" Style="{StaticResource MaterialDesignIconButton}" Width="30" Height="30">
+                                            <md:PackIcon Kind="FilePdfBox" Width="18" Height="18" Foreground="#C62828"/>
+                                        </Button>
+                                        <Button ToolTip="Imprimir" Command="{Binding DataContext.ImprimirLiquidacionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding LoteId}" Style="{StaticResource MaterialDesignIconButton}" Width="30" Height="30">
+                                            <md:PackIcon Kind="Printer" Width="18" Height="18"/>
+                                        </Button>
+                                        <Button ToolTip="Eliminar" Command="{Binding DataContext.EliminarLiquidacionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding LoteId}" Style="{StaticResource MaterialDesignIconButton}" Width="30" Height="30">
+                                            <md:PackIcon Kind="TrashCanOutline" Width="18" Height="18" Foreground="#C62828"/>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </md:Card>
+    </DockPanel>
+</UserControl>

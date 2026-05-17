@@ -48,8 +48,8 @@ public partial class LoteFormViewModel : BaseViewModel
     [ObservableProperty] private decimal _formPesoBruto;
     [ObservableProperty] private decimal _formTara;
     [ObservableProperty] private decimal _formPesoNeto;
-    partial void OnFormPesoBrutoChanged(decimal value) => FormPesoNeto = value - FormTara;
-    partial void OnFormTaraChanged(decimal value) => FormPesoNeto = FormPesoBruto - value;
+    partial void OnFormPesoBrutoChanged(decimal value) { if (value > 0) FormPesoNeto = value - FormTara; }
+    partial void OnFormTaraChanged(decimal value) { if (FormPesoBruto > 0) FormPesoNeto = FormPesoBruto - value; }
 
     [ObservableProperty] private string _formChofer = "";
     [ObservableProperty] private string _formCiChofer = "";
@@ -181,7 +181,6 @@ public partial class LoteFormViewModel : BaseViewModel
         { MostrarErr("Ingrese el CI/NIT y nombre del proveedor."); return; }
         if (FormMina == null) { MostrarErr("Seleccione una mina o paraje."); return; }
         if (string.IsNullOrWhiteSpace(FormTipoMineral)) { MostrarErr("Seleccione el tipo de mineral."); return; }
-        if (FormPesoBruto <= 0) { MostrarErr("El peso bruto debe ser mayor a 0."); return; }
         if (FormPesoNeto <= 0) { MostrarErr("El peso neto debe ser mayor a 0."); return; }
         if (FormAnticipo <= 0) { MostrarErr("El anticipo es obligatorio."); return; }
         if (FormBonoTransporte <= 0) { MostrarErr("El bono de transporte es obligatorio."); return; }

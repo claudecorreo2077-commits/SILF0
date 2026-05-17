@@ -30,6 +30,7 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}"/>
             <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
+            <Setter Property="CharacterCasing" Value="Upper"/>
         </Style>
 
         <Style x:Key="AddBtn" TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
@@ -183,20 +184,20 @@
                     </Grid>
                 </StackPanel>
                 <StackPanel Grid.Row="7" Grid.Column="2">
-                    <TextBlock Style="{StaticResource FL}" Text="Peso Bruto (kg)"/>
-                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="0.00"
-                             Text="{Binding FormPesoBruto, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"/>
-                </StackPanel>
-                <StackPanel Grid.Row="7" Grid.Column="4">
-                    <TextBlock Style="{StaticResource FL}" Text="Tara (kg)"/>
-                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="0.00"
-                             Text="{Binding FormTara, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"/>
+                    <TextBlock Style="{StaticResource FL}" Text="Peso Neto (Tn)" FontWeight="Bold" Opacity="0.9"/>
+                    <TextBox Style="{StaticResource FI}" FontWeight="Bold" FontSize="16"
+                             Foreground="#66BB6A" Text="{Binding FormPesoNeto, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="8" Grid.Column="0" Margin="0,10,0,0">
-                    <TextBlock Style="{StaticResource FL}" Text="Peso Neto (kg)" FontWeight="Bold" Opacity="0.9"/>
-                    <TextBox Style="{StaticResource FI}" IsReadOnly="True" FontWeight="Bold" FontSize="16"
-                             Foreground="#66BB6A" Text="{Binding FormPesoNeto, Mode=OneWay, StringFormat=N2}"/>
+                    <TextBlock Style="{StaticResource FL}" Text="Peso Bruto (Tn)" Opacity="0.6"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Opcional"
+                             Text="{Binding FormPesoBruto, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"/>
+                </StackPanel>
+                <StackPanel Grid.Row="8" Grid.Column="2" Margin="0,10,0,0">
+                    <TextBlock Style="{StaticResource FL}" Text="Tara (Tn)" Opacity="0.6"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Opcional"
+                             Text="{Binding FormTara, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"/>
                 </StackPanel>
 
                 <!-- ═══ TRANSPORTE Y PAGOS ═══ -->

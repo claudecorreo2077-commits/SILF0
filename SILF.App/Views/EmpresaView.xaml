@@ -81,6 +81,26 @@
                 </StackPanel>
             </Grid>
 
+            <!-- Nombre del Liquidador -->
+            <Border Margin="0,24,0,0" Padding="16" CornerRadius="8"
+                    Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                    BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="300"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="Nombre del Liquidador" FontSize="13" FontWeight="SemiBold" FontFamily="Montserrat"/>
+                        <TextBlock Text="Aparece en la firma del reporte PDF de liquidación" FontSize="11" Opacity="0.5" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <TextBox Grid.Column="1" Style="{StaticResource FI}"
+                             materialDesign:HintAssist.Hint="Nombre completo"
+                             Text="{Binding EmpNombreLiquidador, UpdateSourceTrigger=PropertyChanged}"
+                             CharacterCasing="Upper"/>
+                </Grid>
+            </Border>
+
             <!-- Tipo de Cambio -->
             <Border Margin="0,24,0,0" Padding="16" CornerRadius="8"
                     Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
