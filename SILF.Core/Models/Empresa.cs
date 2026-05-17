@@ -1,10 +1,9 @@
+// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Models\Empresa.cs
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SILF.Core.Models;
 
-/// <summary>
-/// Datos de la empresa minera. Solo existe un registro.
-/// </summary>
 public class Empresa
 {
     public int Id { get; set; }
@@ -27,7 +26,10 @@ public class Empresa
     [MaxLength(100)]
     public string? Ingenio { get; set; }
 
-    /// <summary>Ruta al archivo de logo en disco.</summary>
     [MaxLength(500)]
     public string? LogoPath { get; set; }
+
+    /// <summary>Tipo de cambio USD → Bs. Se usa en liquidaciones.</summary>
+    [Column(TypeName = "decimal(8,4)")]
+    public decimal TipoCambio { get; set; } = 6.97m;
 }

@@ -13,7 +13,7 @@ namespace SILF.App.Views;
 public partial class MainWindow : Window
 {
     private bool _sidebarExpanded = true;
-    private bool _isDarkMode = true;
+    private bool _isDarkMode = false; // ← CLARO por defecto
 
     public MainWindow()
     {
@@ -21,6 +21,8 @@ public partial class MainWindow : Window
         DataContext = App.Services.GetRequiredService<MainViewModel>();
         MaxHeight = SystemParameters.MaximizedPrimaryScreenHeight;
         MaxWidth = SystemParameters.MaximizedPrimaryScreenWidth;
+
+        Loaded += (_, _) => ApplyTheme(); // ← Aplicar tema claro al cargar
     }
 
     private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -145,5 +147,3 @@ public partial class MainWindow : Window
         }
     }
 }
-
-

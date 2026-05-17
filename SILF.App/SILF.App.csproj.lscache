@@ -66,28 +66,37 @@ obj/Debug/net10.0-windows/
  SILF.App_Content.g.cs
  Views/
   AgregarItemDialog.g.cs
+  EmpresaView.g.cs
   InicioView.g.cs
   LoginView.g.cs
   LoteFormView.g.cs
   LotesView.g.cs
   MainWindow.g.cs
+  ProveedoresView.g.cs
+  UsuariosView.g.cs
 ViewModels/
  BaseViewModel.cs
+ EmpresaViewModel.cs
  InicioViewModel.cs
  LoginViewModel.cs
  LoteFormViewModel.cs
  LoteResumen.cs
  LotesViewModel.cs
  MainViewModel.cs
+ ProveedoresViewModel.cs
  ProveedorSugerencia.cs
  SesionService.cs
+ UsuariosViewModel.cs
 Views/
  AgregarItemDialog.xaml.cs
+ EmpresaView.xaml.cs
  InicioView.xaml.cs
  LoginView.xaml.cs
  LoteFormView.xaml.cs
  LotesView.xaml.cs
  MainWindow.xaml.cs
+ ProveedoresView.xaml.cs
+ UsuariosView.xaml.cs
 
 [metadataReferences]
 ../

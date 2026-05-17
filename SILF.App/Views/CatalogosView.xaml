@@ -1,0 +1,46 @@
+<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\CatalogosView.xaml -->
+<UserControl x:Class="SILF.App.Views.CatalogosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:views="clr-namespace:SILF.App.Views"
+             FontFamily="Segoe UI"
+             TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+
+    <TabControl TabStripPlacement="Top" FontSize="13"
+                materialDesign:ColorZoneAssist.Mode="Standard">
+
+        <!-- TAB: Proveedores -->
+        <TabItem>
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="AccountHardHat" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Proveedores" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <views:ProveedoresView DataContext="{Binding Proveedores}" Margin="0,16,0,0"/>
+        </TabItem>
+
+        <!-- TAB: Cooperativas -->
+        <TabItem>
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Handshake" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Cooperativas" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <views:CooperativasView DataContext="{Binding Cooperativas}" Margin="0,16,0,0"/>
+        </TabItem>
+
+        <!-- TAB: Minas / Parajes -->
+        <TabItem>
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Pickaxe" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Minas / Parajes" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <views:MinasView DataContext="{Binding Minas}" Margin="0,16,0,0"/>
+        </TabItem>
+    </TabControl>
+</UserControl>

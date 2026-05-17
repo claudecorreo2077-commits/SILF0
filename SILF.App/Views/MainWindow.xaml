@@ -207,11 +207,11 @@
                                     <RadioButton.ToolTip><ToolTip Content="Lotes" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
                                     <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="PackageVariant" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Lotes" VerticalAlignment="Center"/></StackPanel>
                                 </RadioButton>
-                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadLiquidacion}" Command="{Binding NavegarCommand}" CommandParameter="Liquidación">
+                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadLiquidacion}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Liquidación, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Liquidación">
                                     <RadioButton.ToolTip><ToolTip Content="Liquidación" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
                                     <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Calculator" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Liquidación" VerticalAlignment="Center"/></StackPanel>
                                 </RadioButton>
-                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadFlotacion}" Command="{Binding NavegarCommand}" CommandParameter="Flotación">
+                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadFlotacion}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Flotación, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Flotación">
                                     <RadioButton.ToolTip><ToolTip Content="Inv. Flotación" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
                                     <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Flask" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Inv. Flotación" VerticalAlignment="Center"/></StackPanel>
                                 </RadioButton>
@@ -225,9 +225,17 @@
                                     <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="ChartBar" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Reportes" VerticalAlignment="Center"/></StackPanel>
                                 </RadioButton>
                                 <Border Height="1" Background="{DynamicResource MenuSeparator}" Margin="12,10"/>
-                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadConfig}" Command="{Binding NavegarCommand}" CommandParameter="Configuración">
+                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadConfig}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Configuración, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Configuración">
                                     <RadioButton.ToolTip><ToolTip Content="Configuración" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
                                     <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Cog" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Configuración" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                                <RadioButton Style="{StaticResource MenuButton}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Usuarios, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Usuarios">
+                                    <RadioButton.ToolTip><ToolTip Content="Usuarios" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="AccountGroup" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Usuarios" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                                <RadioButton Style="{StaticResource MenuButton}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Catálogos, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Catálogos">
+                                    <RadioButton.ToolTip><ToolTip Content="Catálogos" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="BookOpenVariant" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Catálogos" VerticalAlignment="Center"/></StackPanel>
                                 </RadioButton>
                             </StackPanel>
                         </ScrollViewer>

@@ -137,7 +137,8 @@ public class SilfDbContext : DbContext
             Id = 1,
             RazonSocial = "Empresa Minera",
             Municipio = "Porco",
-            Ingenio = "Villa Imperial"
+            Ingenio = "Villa Imperial",
+            TipoCambio = 6.97m
         });
 
         modelBuilder.Entity<Usuario>().HasData(new Usuario

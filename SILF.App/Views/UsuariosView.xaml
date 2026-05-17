@@ -1,0 +1,249 @@
+<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\UsuariosView.xaml -->
+<UserControl x:Class="SILF.App.Views.UsuariosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             FontFamily="Segoe UI"
+             TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <Style x:Key="FL" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}"/>
+            <Setter Property="Opacity" Value="0.6"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+        <Style x:Key="FI" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- ═══ CONTENIDO PRINCIPAL ═══ -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Barra superior -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                <!-- Botón cambiar MI contraseña (visible para todos) -->
+                <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Command="{Binding CambiarMiPasswordCommand}" Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="KeyVariant" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Cambiar mi contraseña" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Spacer -->
+                <Border Width="1" Height="1" HorizontalAlignment="Stretch"/>
+
+                <!-- Botón nuevo usuario (solo admin, alineado a la derecha) -->
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                        Background="{DynamicResource MaterialDesign.Brush.Primary}"
+                        Command="{Binding NuevoUsuarioCommand}"
+                        HorizontalAlignment="Right"
+                        Visibility="{Binding EsAdmin, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AccountPlus" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Nuevo Usuario" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- DataGrid -->
+            <DataGrid Grid.Row="1"
+                      ItemsSource="{Binding Usuarios}"
+                      AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserAddRows="False" CanUserDeleteRows="False"
+                      SelectionMode="Single" HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal" FontSize="13"
+                      BorderThickness="1"
+                      BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"
+                      materialDesign:DataGridAssist.CornerRadius="8"
+                      materialDesign:DataGridAssist.CellPadding="14 10">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nombre Completo" Binding="{Binding NombreCompleto}" Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="140">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="120"/>
+
+                    <DataGridTextColumn Header="Creado" Binding="{Binding FechaCreacion, StringFormat=dd/MM/yyyy}" Width="100">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Opacity" Value="0.5"/>
+                                <Setter Property="FontSize" Value="12"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <!-- Acciones (solo admin ve editar/eliminar) -->
+                    <DataGridTemplateColumn Header="" Width="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                            Visibility="{Binding DataContext.EsAdmin, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BoolToVis}}">
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                            Width="32" Height="32" ToolTip="Editar"
+                                            Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                            Command="{Binding DataContext.EditarUsuarioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="Pencil" Width="18" Height="18"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                            Width="32" Height="32" ToolTip="Cambiar contraseña"
+                                            Foreground="#FFA726"
+                                            Command="{Binding DataContext.AbrirCambioPasswordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="KeyVariant" Width="18" Height="18"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                            Width="32" Height="32" ToolTip="Eliminar"
+                                            Foreground="#E57373"
+                                            Command="{Binding DataContext.PedirEliminarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="Delete" Width="18" Height="18"/>
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <!-- ═══ DIÁLOGO: CREAR/EDITAR USUARIO ═══ -->
+        <Border Background="#80000000" Visibility="{Binding DialogoAbierto, Converter={StaticResource BoolToVis}}"/>
+        <Border Visibility="{Binding DialogoAbierto, Converter={StaticResource BoolToVis}}"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                CornerRadius="16" Padding="32" MinWidth="400" MaxWidth="480">
+            <Border.Effect><DropShadowEffect BlurRadius="32" ShadowDepth="8" Opacity="0.3" Color="Black"/></Border.Effect>
+            <StackPanel>
+                <TextBlock Text="{Binding DialogoTitulo}" FontSize="18" FontWeight="SemiBold" FontFamily="Montserrat" Margin="0,0,0,20"/>
+
+                <TextBlock Style="{StaticResource FL}" Text="Nombre Completo"/>
+                <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Nombre y apellido"
+                         Text="{Binding EditNombreCompleto, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Style="{StaticResource FL}" Text="Nombre de Usuario" Margin="0,14,0,5"/>
+                <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Para iniciar sesión"
+                         Text="{Binding EditNombreUsuario, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <StackPanel Visibility="{Binding MostrarPassword, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Style="{StaticResource FL}" Text="Contraseña" Margin="0,14,0,5"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Mínimo 4 caracteres"
+                             Text="{Binding EditPassword, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+
+                <TextBlock Style="{StaticResource FL}" Text="Rol" Margin="0,14,0,5"/>
+                <ComboBox FontSize="13" ItemsSource="{Binding RolesDisponibles}" SelectedItem="{Binding EditRol}"
+                          Style="{StaticResource MaterialDesignOutlinedComboBox}" materialDesign:HintAssist.Hint="Seleccionar rol"/>
+
+                <TextBlock Text="{Binding MensajeError}" Foreground="#E57373" FontSize="12" Margin="0,12,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding TieneError, Converter={StaticResource BoolToVis}}"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+                    <Button Content="Cancelar" Margin="0,0,12,0" Style="{StaticResource MaterialDesignFlatButton}"
+                            Command="{Binding CancelarDialogoCommand}"/>
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource MaterialDesign.Brush.Primary}"
+                            Command="{Binding GuardarUsuarioCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Guardar" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ═══ DIÁLOGO: CAMBIAR CONTRASEÑA ═══ -->
+        <Border Background="#80000000" Visibility="{Binding CambioPassAbierto, Converter={StaticResource BoolToVis}}"/>
+        <Border Visibility="{Binding CambioPassAbierto, Converter={StaticResource BoolToVis}}"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                CornerRadius="16" Padding="32" MinWidth="380" MaxWidth="440">
+            <Border.Effect><DropShadowEffect BlurRadius="32" ShadowDepth="8" Opacity="0.3" Color="Black"/></Border.Effect>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <materialDesign:PackIcon Kind="KeyVariant" Width="22" Height="22" Foreground="#FFA726" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Cambiar Contraseña" FontSize="18" FontWeight="SemiBold" FontFamily="Montserrat"/>
+                </StackPanel>
+                <TextBlock FontSize="12" Opacity="0.5" Margin="0,0,0,16">
+                    <Run Text="{Binding CambioPassNombre, Mode=OneWay}" FontWeight="SemiBold"/>
+                </TextBlock>
+
+                <TextBlock Style="{StaticResource FL}" Text="Nueva Contraseña"/>
+                <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Mínimo 4 caracteres"
+                         Text="{Binding NuevaPassword, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Style="{StaticResource FL}" Text="Confirmar Contraseña" Margin="0,14,0,5"/>
+                <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Repetir contraseña"
+                         Text="{Binding ConfirmarPassword, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Text="{Binding PassError}" Foreground="#E57373" FontSize="12" Margin="0,12,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding PassHayError, Converter={StaticResource BoolToVis}}"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+                    <Button Content="Cancelar" Margin="0,0,12,0" Style="{StaticResource MaterialDesignFlatButton}"
+                            Command="{Binding CancelarCambioPasswordCommand}"/>
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}" Background="#FFA726"
+                            Command="{Binding GuardarNuevaPasswordCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="KeyVariant" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Cambiar" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ═══ DIÁLOGO: CONFIRMAR ELIMINAR ═══ -->
+        <Border Background="#80000000" Visibility="{Binding ConfirmarEliminarAbierto, Converter={StaticResource BoolToVis}}"/>
+        <Border Visibility="{Binding ConfirmarEliminarAbierto, Converter={StaticResource BoolToVis}}"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                CornerRadius="16" Padding="32" MinWidth="380" MaxWidth="440">
+            <Border.Effect><DropShadowEffect BlurRadius="32" ShadowDepth="8" Opacity="0.3" Color="Black"/></Border.Effect>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                    <materialDesign:PackIcon Kind="AlertCircle" Width="24" Height="24" Foreground="#FFA726" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Text="Confirmar" FontSize="18" FontWeight="SemiBold" FontFamily="Montserrat"/>
+                </StackPanel>
+                <TextBlock Text="{Binding MensajeConfirmar}" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,24" Opacity="0.8"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancelar" Margin="0,0,12,0" Style="{StaticResource MaterialDesignFlatButton}"
+                            Command="{Binding CancelarEliminarCommand}"/>
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}" Background="#E57373"
+                            Command="{Binding ConfirmarEliminarCommand}"
+                            Visibility="{Binding PuedeEliminar, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Delete" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Eliminar" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

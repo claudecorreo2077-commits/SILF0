@@ -35,14 +35,11 @@ public partial class MainViewModel : BaseViewModel
     [ObservableProperty] private string _iconoModulo = "Home";
     [ObservableProperty] private string _breadcrumb = "Inicio";
     [ObservableProperty] private bool _cargandoVista;
-
-    /// <summary>Qué ítem del sidebar debe estar resaltado. Los RadioButtons bindean IsChecked a esto.</summary>
     [ObservableProperty] private string _sidebarActivo = "Inicio";
 
     [RelayCommand]
     public async Task NavegarAsync(string modulo)
     {
-        // Determinar qué sidebar resaltar
         SidebarActivo = modulo switch
         {
             "NuevoLote" or "EditarLote" => "Lotes",
@@ -58,22 +55,24 @@ public partial class MainViewModel : BaseViewModel
 
         IconoModulo = modulo switch
         {
-            "Inicio"                    => "Home",
-            "Lotes" or "NuevoLote" or "EditarLote" => "PackageVariant",
-            "Liquidación"               => "Calculator",
-            "Flotación"                 => "Flask",
-            "Caja Chica"                => "CashRegister",
-            "Reportes"                  => "ChartBar",
-            "Configuración"             => "Cog",
+            "Inicio"                                => "Home",
+            "Lotes" or "NuevoLote" or "EditarLote"  => "PackageVariant",
+            "Liquidación"                            => "Calculator",
+            "Flotación"                              => "Flask",
+            "Caja Chica"                             => "CashRegister",
+            "Reportes"                               => "ChartBar",
+            "Configuración"                          => "Cog",
+            "Usuarios"                               => "AccountGroup",
+            "Catálogos"                              => "BookOpenVariant",
             _ => "Home"
         };
 
         Breadcrumb = modulo switch
         {
-            "Inicio"     => "Inicio",
-            "NuevoLote"  => "SILF  ›  Lotes  ›  Nuevo Lote",
-            "EditarLote" => "SILF  ›  Lotes  ›  Editar",
-            _            => $"SILF  ›  {ModuloSeleccionado}"
+            "Inicio"        => "Inicio",
+            "NuevoLote"     => "SILF  ›  Lotes  ›  Nuevo Lote",
+            "EditarLote"    => "SILF  ›  Lotes  ›  Editar",
+            _               => $"SILF  ›  {ModuloSeleccionado}"
         };
 
         CargandoVista = true;
@@ -81,16 +80,18 @@ public partial class MainViewModel : BaseViewModel
 
         VistaActual = modulo switch
         {
-            "Inicio"    => CrearVistaDashboard(),
-            "Lotes"     => CrearVistaLotes(),
-            "NuevoLote" => await CrearVistaFormularioLoteAsync(null),
+            "Inicio"        => CrearVistaDashboard(),
+            "Lotes"         => CrearVistaLotes(),
+            "NuevoLote"     => await CrearVistaFormularioLoteAsync(null),
+            "Configuración" => await CrearVistaEmpresaAsync(),
+            "Usuarios"      => await CrearVistaUsuariosAsync(),
+            "Catálogos"     => await CrearVistaCatalogosAsync(),
             _ => null
         };
 
         CargandoVista = false;
     }
 
-    /// <summary>Navega al formulario de edición con un lote específico.</summary>
     public async Task NavegarAEditarLoteAsync(int loteId)
     {
         SidebarActivo = "Lotes";
@@ -110,10 +111,7 @@ public partial class MainViewModel : BaseViewModel
 
     private Views.InicioView CrearVistaDashboard()
     {
-        var vm = new InicioViewModel
-        {
-            NavegarCallback = async (m) => await NavegarAsync(m)
-        };
+        var vm = new InicioViewModel { NavegarCallback = async (m) => await NavegarAsync(m) };
         var vista = new Views.InicioView { DataContext = vm };
         _ = vm.CargarDatosCommand.ExecuteAsync(null);
         return vista;
@@ -125,10 +123,8 @@ public partial class MainViewModel : BaseViewModel
         {
             NavegarAFormulario = async (loteId) =>
             {
-                if (loteId.HasValue)
-                    await NavegarAEditarLoteAsync(loteId.Value);
-                else
-                    await NavegarAsync("NuevoLote");
+                if (loteId.HasValue) await NavegarAEditarLoteAsync(loteId.Value);
+                else await NavegarAsync("NuevoLote");
             }
         };
         var vista = new Views.LotesView { DataContext = vm };
@@ -143,12 +139,34 @@ public partial class MainViewModel : BaseViewModel
             OnGuardado = async () => await NavegarAsync("Lotes"),
             OnCancelado = async () => await NavegarAsync("Lotes")
         };
-
         await vm.CargarCatalogosAsync();
-        if (loteId.HasValue)
-            await vm.CargarLoteParaEditarAsync(loteId.Value);
-
+        if (loteId.HasValue) await vm.CargarLoteParaEditarAsync(loteId.Value);
         return new Views.LoteFormView { DataContext = vm };
+    }
+
+    private async Task<Views.EmpresaView> CrearVistaEmpresaAsync()
+    {
+        var vm = new EmpresaViewModel();
+        var vista = new Views.EmpresaView { DataContext = vm };
+        await vm.CargarDatosCommand.ExecuteAsync(null);
+        return vista;
+    }
+
+    private async Task<Views.UsuariosView> CrearVistaUsuariosAsync()
+    {
+        var usuarioId = _sesion.UsuarioActual?.Id ?? 0;
+        var vm = new UsuariosViewModel(_sesion.EsAdmin, usuarioId);
+        var vista = new Views.UsuariosView { DataContext = vm };
+        await vm.CargarDatosCommand.ExecuteAsync(null);
+        return vista;
+    }
+
+    private async Task<Views.CatalogosView> CrearVistaCatalogosAsync()
+    {
+        var vm = new CatalogosViewModel();
+        var vista = new Views.CatalogosView { DataContext = vm };
+        await vm.CargarTodoCommand.ExecuteAsync(null);
+        return vista;
     }
 
     [RelayCommand]
