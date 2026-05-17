@@ -1,9 +1,5 @@
-﻿<Application x:Class="SILF.App.App"
+<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\App.xaml -->
+<Application x:Class="SILF.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SILF.App"
-             StartupUri="MainWindow.xaml">
-    <Application.Resources>
-         
-    </Application.Resources>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 </Application>

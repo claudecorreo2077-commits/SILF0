@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="SILF.App/SILF.App.csproj" />
-  <Project Path="SILF.Core/SILF.Core.csproj" />
-  <Project Path="SILF.Data/SILF.Data.csproj" />
-  <Project Path="SILF.Reports/SILF.Reports.csproj" />
-</Solution>

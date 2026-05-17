@@ -1,0 +1,341 @@
+<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\MainWindow.xaml -->
+<Window x:Class="SILF.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:conv="clr-namespace:SILF.App.Converters"
+        Title="{Binding Titulo}" Height="700" Width="1200"
+        MinHeight="600" MinWidth="1000"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="CanResizeWithGrip" MouseDown="Window_MouseDown">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:StringMatchConverter x:Key="StringMatch"/>
+        <SolidColorBrush x:Key="MenuHoverBrush" Color="#18FFFFFF"/>
+        <SolidColorBrush x:Key="MenuSelectedBg" Color="#F0F0F0"/>
+        <SolidColorBrush x:Key="MenuSelectedFg" Color="#1B1448"/>
+        <SolidColorBrush x:Key="MenuForeground" Color="#90A4AE"/>
+        <SolidColorBrush x:Key="MenuSeparator" Color="#15FFFFFF"/>
+        <SolidColorBrush x:Key="ExtensionBg" Color="#161240"/>
+        <SolidColorBrush x:Key="ExtensionFg" Color="White"/>
+        <SolidColorBrush x:Key="SidebarTitle" Color="White"/>
+        <SolidColorBrush x:Key="InputBg" Color="#10FFFFFF"/>
+        <SolidColorBrush x:Key="InputBorder" Color="#30FFFFFF"/>
+        <SolidColorBrush x:Key="InputFg" Color="White"/>
+        <SolidColorBrush x:Key="PanelBorder" Color="#15FFFFFF"/>
+        <SolidColorBrush x:Key="CardBg" Color="#0AFFFFFF"/>
+
+        <!--
+        ╔════════════════════════════════════════════════════════════════╗
+        ║  EXTENSIÓN DEL MENÚ (se desliza como parte del ítem)         ║
+        ║  Padding="14,11": 2do valor controla el alto                 ║
+        ║  HorizontalOffset: separación horizontal del sidebar         ║
+        ║  VerticalOffset: negativo=sube, positivo=baja                ║
+        ╚════════════════════════════════════════════════════════════════╝
+        -->
+        <Style x:Key="MenuExtension" TargetType="ToolTip">
+            <Setter Property="Background" Value="{DynamicResource ExtensionBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ExtensionFg}"/>
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Placement" Value="Right"/>
+            <!-- AJUSTAR posición -->
+            <Setter Property="HorizontalOffset" Value="2"/>
+            <Setter Property="VerticalOffset" Value="2"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <!-- AJUSTAR alto: Padding 2do valor -->
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="0" Padding="14,11" BorderThickness="0"
+                                RenderTransformOrigin="0,0.5">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" Color="Black" Direction="0"/>
+                            </Border.Effect>
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="slideX" X="-10"/>
+                            </Border.RenderTransform>
+                            <Border.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="slideX" Storyboard.TargetProperty="X" From="-10" To="0" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction><QuadraticEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Border.Triggers>
+                            <ContentPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MenuButton" TargetType="RadioButton">
+            <Setter Property="Height" Value="46"/>
+            <Setter Property="Margin" Value="8,2"/>
+            <Setter Property="Foreground" Value="{DynamicResource MenuForeground}"/>
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ToolTipService.IsEnabled" Value="False"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="0"/>
+            <Setter Property="ToolTipService.BetweenShowDelay" Value="0"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="border" Background="Transparent" CornerRadius="10" Padding="12,0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource MenuHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource MenuSelectedBg}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource MenuSelectedFg}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TitleBarButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#90A4AE"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="38"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#20FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border x:Name="WindowBorder" CornerRadius="0" BorderThickness="1" ClipToBounds="True" BorderBrush="#2A2060">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
+                <GradientStop Color="#060531" Offset="0"/><GradientStop Color="#1B1448" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="38"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+
+            <!-- BARRA DE TÍTULO -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="14,0">
+                    <Image Source="/Assets/Images/logo.png" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="TxtTitleSilf" Text="SILF" Foreground="White" FontSize="13" FontWeight="SemiBold" FontFamily="Montserrat" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,5,0">
+                    <Button Content="—" FontSize="12" Style="{StaticResource TitleBarButton}" Click="BtnMinimize_Click"/>
+                    <Button x:Name="BtnMax" Content="☐" FontSize="12" Style="{StaticResource TitleBarButton}" Click="BtnMaximize_Click"/>
+                    <Button Content="✕" FontSize="12" Style="{StaticResource TitleBarButton}" Click="BtnClose_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+
+                <!-- SIDEBAR -->
+                <Border x:Name="NavPanel" Grid.Column="0" Width="230" Background="#0C0A28" Padding="0,5">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+                        <!-- Logo toggle — ClipToBounds evita que "SILF" se vea al colapsar -->
+                        <Button x:Name="BtnToggle" Grid.Row="0" Margin="6,10,6,12" Height="48" Cursor="Hand" Click="BtnToggle_Click">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="bd" Background="Transparent" CornerRadius="10" Padding="6,0" ClipToBounds="True">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Width="34" Height="34" CornerRadius="17" Background="#462AD8">
+                                                <Image Source="/Assets/Images/logo.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="SILF" Foreground="{DynamicResource SidebarTitle}"
+                                                       FontSize="18" FontWeight="Bold" FontFamily="Montserrat"
+                                                       VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                            <materialDesign:PackIcon x:Name="chevron" Grid.Column="2"
+                                                Kind="ChevronLeft" Width="18" Height="18"
+                                                Foreground="{DynamicResource MenuForeground}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="bd" Property="Background" Value="#12FFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- Menú -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel>
+                                <RadioButton Style="{StaticResource MenuButton}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Inicio, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Inicio">
+                                    <RadioButton.ToolTip><ToolTip Content="Inicio" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="ViewDashboard" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Inicio" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadLiquidacion}" Command="{Binding NavegarCommand}" CommandParameter="Lotes" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Lotes, Mode=OneWay}">
+                                    <RadioButton.ToolTip><ToolTip Content="Lotes" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="PackageVariant" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Lotes" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadLiquidacion}" Command="{Binding NavegarCommand}" CommandParameter="Liquidación">
+                                    <RadioButton.ToolTip><ToolTip Content="Liquidación" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Calculator" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Liquidación" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadFlotacion}" Command="{Binding NavegarCommand}" CommandParameter="Flotación">
+                                    <RadioButton.ToolTip><ToolTip Content="Inv. Flotación" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Flask" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Inv. Flotación" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                                <Border Height="1" Background="{DynamicResource MenuSeparator}" Margin="12,10"/>
+                                <RadioButton Style="{StaticResource MenuButton}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Caja Chica, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Caja Chica">
+                                    <RadioButton.ToolTip><ToolTip Content="Caja Chica" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="CashRegister" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Caja Chica" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                                <RadioButton Style="{StaticResource MenuButton}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Reportes, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Reportes">
+                                    <RadioButton.ToolTip><ToolTip Content="Reportes" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="ChartBar" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Reportes" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                                <Border Height="1" Background="{DynamicResource MenuSeparator}" Margin="12,10"/>
+                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadConfig}" Command="{Binding NavegarCommand}" CommandParameter="Configuración">
+                                    <RadioButton.ToolTip><ToolTip Content="Configuración" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Cog" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Configuración" VerticalAlignment="Center"/></StackPanel>
+                                </RadioButton>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Parte inferior -->
+                        <StackPanel Grid.Row="2">
+                            <Border Height="1" Background="{DynamicResource MenuSeparator}" Margin="12,5"/>
+                            <Button x:Name="BtnTheme" Margin="8,4" Height="44" Cursor="Hand" Click="BtnTheme_Click"
+                                    ToolTipService.IsEnabled="False" ToolTipService.InitialShowDelay="0"
+                                    ToolTipService.Placement="Right" ToolTipService.HorizontalOffset="2" ToolTipService.VerticalOffset="2">
+                                <Button.ToolTip><ToolTip Content="Cambiar tema" Style="{StaticResource MenuExtension}"/></Button.ToolTip>
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="bd" Background="{DynamicResource MenuHoverBrush}" CornerRadius="10" Padding="10,0" ClipToBounds="True">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <materialDesign:PackIcon x:Name="ThemeIcon" Kind="WeatherNight" Width="22" Height="22" Foreground="#FFD54F" Margin="2,0,12,0"/>
+                                                <TextBlock x:Name="ThemeText" Text="Oscuro" Foreground="{DynamicResource MenuForeground}" FontSize="12" FontFamily="Montserrat" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="#25FFFFFF"/></Trigger></ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Border x:Name="UserPanel" Margin="4,4" CornerRadius="10"
+                                    Background="{DynamicResource MenuHoverBrush}" Height="52" ClipToBounds="True"
+                                    ToolTipService.IsEnabled="False" ToolTipService.InitialShowDelay="0"
+                                    ToolTipService.Placement="Right" ToolTipService.HorizontalOffset="2" ToolTipService.VerticalOffset="2">
+                                <Border.ToolTip>
+                                    <ToolTip Style="{StaticResource MenuExtension}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding NombreUsuario}" FontWeight="SemiBold" FontSize="13"/>
+                                            <TextBlock Text="{Binding RolUsuario}" FontSize="11" Opacity="0.7" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </ToolTip>
+                                </Border.ToolTip>
+                                <Grid Margin="10,0">
+                                    <Border Width="32" Height="32" CornerRadius="16" Background="#462AD8" HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding InicialUsuario}" Foreground="White" FontSize="13" FontWeight="Bold" FontFamily="Montserrat" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center" Margin="42,0,0,0">
+                                        <TextBlock Text="{Binding NombreUsuario}" Foreground="{DynamicResource ExtensionFg}" FontSize="12" FontFamily="Montserrat" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding RolUsuario}" Foreground="{DynamicResource MenuForeground}" FontSize="10" FontFamily="Montserrat"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <RadioButton Style="{StaticResource MenuButton}" Command="{Binding CerrarSesionCommand}" Margin="8,0,8,8">
+                                <RadioButton.ToolTip><ToolTip Content="Cerrar Sesión" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
+                                <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Logout" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center" Foreground="#E57373"/><TextBlock Text="Cerrar Sesión" VerticalAlignment="Center" Foreground="#E57373"/></StackPanel>
+                            </RadioButton>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- CONTENIDO — Segoe UI para datos, Montserrat para headers -->
+                <Border x:Name="ContentArea" Grid.Column="1" Margin="8,5,8,8" CornerRadius="12" Background="#10FFFFFF">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Barra de carga (feedback visual al navegar) -->
+                        <ProgressBar Grid.Row="0" Height="3" IsIndeterminate="True"
+                                     Foreground="#462AD8" Background="Transparent" BorderThickness="0"
+                                     Visibility="{Binding CargandoVista, Converter={StaticResource BoolToVis}}"/>
+
+                        <!-- Header: ícono + módulo + breadcrumb -->
+                        <Grid Grid.Row="1" Margin="20,12,20,10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Breadcrumb -->
+                            <TextBlock Grid.Row="0" Text="{Binding Breadcrumb}"
+                                       Foreground="{DynamicResource MenuForeground}"
+                                       FontSize="11" FontFamily="Segoe UI" Margin="0,0,0,4"/>
+
+                            <!-- Título del módulo -->
+                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="{Binding IconoModulo}" Width="26" Height="26"
+                                                          Foreground="#DA34AE" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <TextBlock x:Name="TxtModulo" Text="{Binding ModuloSeleccionado}" Foreground="White"
+                                           FontSize="22" FontWeight="SemiBold" FontFamily="Montserrat" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Vista hija (Segoe UI para contenido de datos) -->
+                        <Border Grid.Row="2" Margin="20,0,20,15">
+                            <ContentControl Content="{Binding VistaActual}" FontFamily="Segoe UI">
+                                <ContentControl.Style>
+                                    <Style TargetType="ContentControl"><Style.Triggers>
+                                        <DataTrigger Binding="{Binding VistaActual}" Value="{x:Null}"><Setter Property="ContentTemplate"><Setter.Value><DataTemplate>
+                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                <Image Source="/Assets/Images/logo.png" Width="100" Height="100" Opacity="0.12" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                <TextBlock Text="Seleccione un módulo del menú" Foreground="#546E7A" FontSize="15" FontFamily="Segoe UI" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate></Setter.Value></Setter></DataTrigger>
+                                    </Style.Triggers></Style>
+                                </ContentControl.Style>
+                            </ContentControl>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
+
+

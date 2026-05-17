@@ -1,0 +1,262 @@
+<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\LoteFormView.xaml -->
+<UserControl x:Class="SILF.App.Views.LoteFormView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             FontFamily="Segoe UI"
+             TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="FL" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}"/>
+            <Setter Property="Opacity" Value="0.6"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+
+        <Style x:Key="FI" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}"/>
+            <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
+            <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
+        </Style>
+
+        <Style x:Key="AddBtn" TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="ToolTip" Value="Agregar nuevo"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="0,0,16,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="28"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="28"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- ═══ DATOS GENERALES ═══ -->
+                <TextBlock Grid.Row="0" Grid.ColumnSpan="5" Style="{StaticResource SectionTitle}" Text="Datos Generales"/>
+
+                <!-- Fecha + Tipo + Visible -->
+                <StackPanel Grid.Row="1" Grid.Column="0">
+                    <TextBlock Style="{StaticResource FL}" Text="Fecha de Ingreso"/>
+                    <DatePicker FontSize="13" SelectedDate="{Binding FormFechaIngreso}"
+                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                materialDesign:HintAssist.Hint="Seleccionar fecha"
+                                Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="2">
+                    <TextBlock Style="{StaticResource FL}" Text="Tipo de Mineral"/>
+                    <ComboBox FontSize="13" ItemsSource="{Binding TiposMineral}" SelectedItem="{Binding FormTipoMineral}"
+                              Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}" materialDesign:HintAssist.Hint="Seleccionar"/>
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="4" VerticalAlignment="Bottom" Margin="0,0,0,8">
+                    <CheckBox IsChecked="{Binding FormVisible}" FontSize="13"
+                              Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                              Content="Visible en reportes" ToolTip="Si está desmarcado, el lote se oculta de los reportes oficiales"/>
+                </StackPanel>
+
+                <!-- ═══ PROVEEDOR ═══ -->
+                <Border Grid.Row="2" Grid.ColumnSpan="5" Margin="0,16,0,8" Height="1"
+                        Background="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"/>
+                <TextBlock Grid.Row="3" Grid.ColumnSpan="5" Style="{StaticResource SectionTitle}" Text="Proveedor"/>
+
+                <!-- CI/NIT + Nombre + Cooperativa -->
+                <StackPanel Grid.Row="4" Grid.Column="0">
+                    <TextBlock Style="{StaticResource FL}" Text="CI / NIT"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBox x:Name="TxtCiNit" Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Buscar"
+                                 Text="{Binding FormCiNit, UpdateSourceTrigger=PropertyChanged}" TextChanged="TxtCiNit_TextChanged"/>
+                        <Button Grid.Column="1" Style="{StaticResource AddBtn}" Margin="4,0,0,0" Command="{Binding AgregarProveedorCommand}">
+                            <materialDesign:PackIcon Kind="AccountPlus" Width="20" Height="20"/>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+                <StackPanel Grid.Row="4" Grid.Column="2">
+                    <TextBlock Style="{StaticResource FL}" Text="Nombre Completo"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Nombre del proveedor"
+                             Text="{Binding FormNombreProveedor, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Grid.Row="4" Grid.Column="4">
+                    <TextBlock Style="{StaticResource FL}" Text="Cooperativa"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <ComboBox FontSize="13" ItemsSource="{Binding Cooperativas}" SelectedItem="{Binding FormCooperativa}"
+                                  Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                  DisplayMemberPath="Nombre" Style="{StaticResource MaterialDesignOutlinedComboBox}" materialDesign:HintAssist.Hint="Seleccionar"/>
+                        <Button Grid.Column="1" Style="{StaticResource AddBtn}" Margin="4,0,0,0" Command="{Binding AgregarCooperativaCommand}">
+                            <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Popup autocompletado -->
+                <Popup Grid.Row="4" PlacementTarget="{Binding ElementName=TxtCiNit}" Placement="Bottom"
+                       StaysOpen="False" AllowsTransparency="True" IsOpen="{Binding MostrarSugerencias, Mode=TwoWay}">
+                    <Border Background="{DynamicResource MaterialDesign.Brush.Background}" CornerRadius="8"
+                            BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}" BorderThickness="1"
+                            MaxHeight="200" MinWidth="300">
+                        <Border.Effect><DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.25" Color="Black"/></Border.Effect>
+                        <ListBox ItemsSource="{Binding SugerenciasProveedor}" SelectedItem="{Binding ProveedorSugerido}"
+                                 Background="Transparent" BorderThickness="0" FontSize="13" Cursor="Hand">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="8,4">
+                                        <TextBlock FontWeight="SemiBold"><Run Text="{Binding CiNit}"/><Run Text=" — "/><Run Text="{Binding NombreCompleto}"/></TextBlock>
+                                        <TextBlock Text="{Binding CooperativaNombre}" FontSize="11" Opacity="0.6"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Popup>
+
+                <!-- ═══ MINERAL Y PESOS ═══ -->
+                <Border Grid.Row="5" Grid.ColumnSpan="5" Margin="0,16,0,8" Height="1"
+                        Background="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"/>
+                <TextBlock Grid.Row="6" Grid.ColumnSpan="5" Style="{StaticResource SectionTitle}" Text="Mina y Pesos"/>
+
+                <!-- Mina + Peso Bruto + Tara -->
+                <StackPanel Grid.Row="7" Grid.Column="0">
+                    <TextBlock Style="{StaticResource FL}" Text="Mina / Paraje"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <ComboBox FontSize="13" ItemsSource="{Binding Minas}" SelectedItem="{Binding FormMina}"
+                                  Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                  DisplayMemberPath="Nombre" Style="{StaticResource MaterialDesignOutlinedComboBox}" materialDesign:HintAssist.Hint="Seleccionar"/>
+                        <Button Grid.Column="1" Style="{StaticResource AddBtn}" Margin="4,0,0,0" Command="{Binding AgregarMinaCommand}">
+                            <materialDesign:PackIcon Kind="Plus" Width="20" Height="20"/>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+                <StackPanel Grid.Row="7" Grid.Column="2">
+                    <TextBlock Style="{StaticResource FL}" Text="Peso Bruto (kg)"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="0.00"
+                             Text="{Binding FormPesoBruto, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"/>
+                </StackPanel>
+                <StackPanel Grid.Row="7" Grid.Column="4">
+                    <TextBlock Style="{StaticResource FL}" Text="Tara (kg)"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="0.00"
+                             Text="{Binding FormTara, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"/>
+                </StackPanel>
+
+                <!-- Peso Neto (solo lectura) -->
+                <StackPanel Grid.Row="8" Grid.Column="0" Margin="0,10,0,0">
+                    <TextBlock Style="{StaticResource FL}" Text="Peso Neto (kg)" FontWeight="Bold" Opacity="0.9"/>
+                    <TextBox Style="{StaticResource FI}" IsReadOnly="True" FontWeight="Bold" FontSize="16"
+                             Foreground="#66BB6A" Text="{Binding FormPesoNeto, Mode=OneWay, StringFormat=N2}"/>
+                </StackPanel>
+
+                <!-- ═══ TRANSPORTE ═══ -->
+                <Border Grid.Row="9" Grid.ColumnSpan="5" Margin="0,16,0,8" Height="1"
+                        Background="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"/>
+                <TextBlock Grid.Row="10" Grid.ColumnSpan="5" Style="{StaticResource SectionTitle}" Text="Transporte y Pagos"/>
+
+                <!-- Chofer + CI + Placa -->
+                <StackPanel Grid.Row="11" Grid.Column="0">
+                    <TextBlock Style="{StaticResource FL}" Text="Nombre del Chofer"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Nombre completo"
+                             Text="{Binding FormChofer, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Grid.Row="11" Grid.Column="2">
+                    <TextBlock Style="{StaticResource FL}" Text="CI Chofer"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Cédula"
+                             Text="{Binding FormCiChofer, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Grid.Row="11" Grid.Column="4">
+                    <TextBlock Style="{StaticResource FL}" Text="Placa del Vehículo"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Ej: 1228PGU"
+                             Text="{Binding FormPlaca, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+
+                <!-- Ticket + Anticipo + Bono Transporte -->
+                <StackPanel Grid.Row="12" Grid.Column="0" Margin="0,10,0,0">
+                    <TextBlock Style="{StaticResource FL}" Text="Nº Ticket"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Número"
+                             Text="{Binding FormTicket, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Grid.Row="12" Grid.Column="2" Margin="0,10,0,0">
+                    <TextBlock Style="{StaticResource FL}" Text="Anticipo (Bs)" FontWeight="Bold"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Monto obligatorio"
+                             Text="{Binding FormAnticipo, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"
+                             FontWeight="SemiBold" Foreground="#42A5F5"/>
+                </StackPanel>
+                <StackPanel Grid.Row="12" Grid.Column="4" Margin="0,10,0,0">
+                    <TextBlock Style="{StaticResource FL}" Text="Bono Transporte (Bs)" FontWeight="Bold"/>
+                    <TextBox Style="{StaticResource FI}" materialDesign:HintAssist.Hint="Monto obligatorio"
+                             Text="{Binding FormBonoTransporte, UpdateSourceTrigger=LostFocus, StringFormat=N2}" GotFocus="NumericField_GotFocus"
+                             FontWeight="SemiBold" Foreground="#FFA726"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ═══ FOOTER ═══ -->
+        <Grid Grid.Row="1" Margin="0,16,0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Observaciones a la izquierda -->
+            <TextBox Grid.Column="0" Style="{StaticResource FI}" Height="44" TextWrapping="Wrap"
+                     materialDesign:HintAssist.Hint="Observaciones (opcional)" Margin="0,0,20,0"
+                     Text="{Binding FormObservaciones, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <!-- Botones a la derecha -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="{Binding MensajeError}" Foreground="#E57373" FontSize="12" VerticalAlignment="Center"
+                           Margin="0,0,16,0" Visibility="{Binding TieneError, Converter={StaticResource BoolToVis}}"/>
+                <Button Content="Cancelar" Margin="0,0,12,0"
+                        Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding CancelarCommand}"/>
+                <Button Command="{Binding GuardarCommand}"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Background="{DynamicResource MaterialDesign.Brush.Primary}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Guardar Lote" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

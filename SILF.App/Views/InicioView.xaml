@@ -1,0 +1,312 @@
+<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\InicioView.xaml -->
+<UserControl x:Class="SILF.App.Views.InicioView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             FontFamily="Segoe UI">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Estilo base para tarjetas -->
+        <Style x:Key="DashCard" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="18,16"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.15" Color="Black" Direction="270"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Estilo para botones de acción rápida -->
+        <Style x:Key="QuickActionBtn" TargetType="Button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                CornerRadius="10" Padding="18,0">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Badge de estado -->
+        <Style x:Key="EstadoBadge" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,0,10">
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- FILA 1: TARJETAS RESUMEN                                      -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <UniformGrid Columns="4" Margin="0,0,0,16">
+
+                <!-- Tarjeta: Registrados -->
+                <Border Style="{StaticResource DashCard}" Background="#1C78909C" Margin="0,0,8,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Registrados" FontSize="12" Foreground="#90A4AE" FontWeight="Medium"/>
+                            <TextBlock Text="{Binding TotalRegistrados}" FontSize="32" FontWeight="Bold"
+                                       Foreground="#78909C" FontFamily="Montserrat" Margin="0,4,0,0"/>
+                            <TextBlock Text="lotes pendientes" FontSize="11" Foreground="#78909C" Opacity="0.7"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Width="46" Height="46" CornerRadius="12"
+                                Background="#2578909C" VerticalAlignment="Top">
+                            <materialDesign:PackIcon Kind="PackageVariant" Width="24" Height="24"
+                                                      Foreground="#78909C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Tarjeta: En Laboratorio -->
+                <Border Style="{StaticResource DashCard}" Background="#1CFFA726" Margin="4,0,4,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="En Laboratorio" FontSize="12" Foreground="#FFA726" FontWeight="Medium"/>
+                            <TextBlock Text="{Binding TotalEnLaboratorio}" FontSize="32" FontWeight="Bold"
+                                       Foreground="#FFA726" FontFamily="Montserrat" Margin="0,4,0,0"/>
+                            <TextBlock Text="esperando leyes" FontSize="11" Foreground="#FFA726" Opacity="0.7"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Width="46" Height="46" CornerRadius="12"
+                                Background="#25FFA726" VerticalAlignment="Top">
+                            <materialDesign:PackIcon Kind="Flask" Width="24" Height="24"
+                                                      Foreground="#FFA726" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Tarjeta: Pendientes de Pago -->
+                <Border Style="{StaticResource DashCard}" Background="#1C26A69A" Margin="4,0,4,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Por Liquidar" FontSize="12" Foreground="#26A69A" FontWeight="Medium"/>
+                            <TextBlock Text="{Binding TotalPorLiquidar}" FontSize="32" FontWeight="Bold"
+                                       Foreground="#26A69A" FontFamily="Montserrat" Margin="0,4,0,0"/>
+                            <TextBlock Text="leyes listas" FontSize="11" Foreground="#26A69A" Opacity="0.7"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Width="46" Height="46" CornerRadius="12"
+                                Background="#2526A69A" VerticalAlignment="Top">
+                            <materialDesign:PackIcon Kind="Calculator" Width="24" Height="24"
+                                                      Foreground="#26A69A" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Tarjeta: Completados del mes -->
+                <Border Style="{StaticResource DashCard}" Background="#1C66BB6A" Margin="8,0,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Completados" FontSize="12" Foreground="#66BB6A" FontWeight="Medium"/>
+                            <TextBlock Text="{Binding TotalCompletadosMes}" FontSize="32" FontWeight="Bold"
+                                       Foreground="#66BB6A" FontFamily="Montserrat" Margin="0,4,0,0"/>
+                            <TextBlock Text="este mes" FontSize="11" Foreground="#66BB6A" Opacity="0.7"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Width="46" Height="46" CornerRadius="12"
+                                Background="#2566BB6A" VerticalAlignment="Top">
+                            <materialDesign:PackIcon Kind="CheckCircle" Width="24" Height="24"
+                                                      Foreground="#66BB6A" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+            </UniformGrid>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- FILA 2: ACCIONES RÁPIDAS + PESO TOTAL                        -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <Grid Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Style="{StaticResource QuickActionBtn}" Background="#462AD8"
+                        Command="{Binding NuevoLoteCommand}" Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Plus" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Nuevo Lote" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Grid.Column="1" Style="{StaticResource QuickActionBtn}" Background="#DA34AE"
+                        Command="{Binding NuevoReciboCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Plus" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Nuevo Recibo" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Peso total del mes -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="Weight" Width="20" Height="20" Foreground="#90A4AE"
+                                              VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Foreground="#90A4AE" FontSize="13" VerticalAlignment="Center">
+                        <Run Text="Peso total del mes: "/>
+                        <Run Text="{Binding PesoTotalMes, StringFormat=N2}" FontWeight="Bold" Foreground="#B0BEC5"/>
+                        <Run Text=" ton"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <!-- FILA 3: TABLA DE ÚLTIMOS LOTES                                -->
+            <!-- ══════════════════════════════════════════════════════════════ -->
+            <Border Style="{StaticResource DashCard}" Background="#0AFFFFFF" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header de la tabla -->
+                    <Grid Margin="18,14,18,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Últimos lotes registrados" FontSize="15" FontWeight="SemiBold"
+                                   FontFamily="Montserrat" Foreground="{DynamicResource ExtensionFg}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding TotalLotes, StringFormat='Total: {0}'}"
+                                   FontSize="12" Foreground="#90A4AE" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Tabla -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding UltimosLotes}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" CanUserDeleteRows="False"
+                              CanUserReorderColumns="False" CanUserSortColumns="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#10FFFFFF"
+                              BorderThickness="0" Background="Transparent"
+                              RowBackground="Transparent"
+                              AlternatingRowBackground="#05FFFFFF"
+                              FontSize="13" FontFamily="Segoe UI"
+                              Foreground="{DynamicResource ExtensionFg}"
+                              SelectionMode="Single" SelectionUnit="FullRow"
+                              Margin="0,0,0,8"
+                              ColumnHeaderHeight="38"
+                              RowHeight="44">
+
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="#90A4AE"/>
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="FontFamily" Value="Montserrat"/>
+                                <Setter Property="Padding" Value="18,0"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                <Setter Property="BorderBrush" Value="#15FFFFFF"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Padding" Value="18,0"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridCell">
+                                            <Border Padding="{TemplateBinding Padding}" Background="Transparent">
+                                                <ContentPresenter VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#15462AD8"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource ExtensionFg}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#08FFFFFF"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#12462AD8"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nº LOTE" Binding="{Binding NumeroLote}" Width="80"/>
+                            <DataGridTextColumn Header="PROVEEDOR" Binding="{Binding NombreProveedor}" Width="*"/>
+                            <DataGridTextColumn Header="MINA" Binding="{Binding NombreMina}" Width="140"/>
+                            <DataGridTextColumn Header="PESO NETO" Binding="{Binding PesoNeto, StringFormat=N2}" Width="110"/>
+                            <DataGridTextColumn Header="TIPO" Binding="{Binding TipoMineralTexto}" Width="100"/>
+
+                            <!-- Columna Estado con badge de color -->
+                            <DataGridTemplateColumn Header="ESTADO" Width="150" SortMemberPath="EstadoTexto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource EstadoBadge}"
+                                                Background="{Binding EstadoColor}">
+                                            <TextBlock Text="{Binding EstadoTexto}" FontSize="11"
+                                                       FontWeight="SemiBold" Foreground="White"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="FECHA" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Mensaje cuando no hay datos -->
+                    <TextBlock Grid.Row="1" Text="No hay lotes registrados aún. Usa el botón + Nuevo Lote para comenzar."
+                               Foreground="#546E7A" FontSize="14" FontFamily="Segoe UI"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,40"
+                               Visibility="{Binding SinLotes, Converter={StaticResource BoolToVis}}"/>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
