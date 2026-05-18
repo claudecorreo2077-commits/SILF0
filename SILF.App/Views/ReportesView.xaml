@@ -1,0 +1,287 @@
+<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\ReportesView.xaml -->
+<UserControl x:Class="SILF.App.Views.ReportesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <!-- Estilo para los headers de sección -->
+        <Style x:Key="SeccionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+        </Style>
+
+        <!-- Estilo para las cards de reporte -->
+        <Style x:Key="ReporteCard" TargetType="md:Card">
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="md:ElevationAssist.Elevation" Value="Dp1"/>
+            <Setter Property="UniformCornerRadius" Value="8"/>
+        </Style>
+
+        <!-- Estilo para labels -->
+        <Style x:Key="CampoLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Estilo para botón generar -->
+        <Style x:Key="BotonGenerar" TargetType="Button"
+               BasedOn="{StaticResource MaterialDesignRaisedButton}">
+            <Setter Property="md:ButtonAssist.CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="36"/>
+        </Style>
+
+        <Style x:Key="BotonGenerarOutline" TargetType="Button"
+               BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+            <Setter Property="md:ButtonAssist.CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="36"/>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- ── Barra superior con estado ── -->
+        <Border DockPanel.Dock="Bottom" Padding="16,8"
+                Background="{DynamicResource MaterialDesignCardBackground}">
+            <Grid>
+                <TextBlock Text="{Binding MensajeEstado}" FontSize="12"
+                           Foreground="{DynamicResource PrimaryHueMidBrush}"
+                           VerticalAlignment="Center"/>
+                <ProgressBar IsIndeterminate="True" HorizontalAlignment="Right" Width="120"
+                             Visibility="{Binding Generando, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </Grid>
+        </Border>
+
+        <!-- ── Contenido scrolleable ── -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,16">
+            <StackPanel Margin="24,0">
+
+                <!-- ══════════════════════════════════════════ -->
+                <!-- FILTRO DE FECHAS GLOBAL -->
+                <!-- ══════════════════════════════════════════ -->
+                <md:Card Style="{StaticResource ReporteCard}"
+                         Background="{DynamicResource PrimaryHueLightBrush}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <md:PackIcon Kind="CalendarRange" Width="28" Height="28"
+                                     VerticalAlignment="Center" Margin="0,0,16,0"
+                                     Foreground="{DynamicResource PrimaryHueDarkBrush}"/>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Rango de fechas para reportes consolidados"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryHueDarkBrush}"/>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="30"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="180"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="Desde:" Style="{StaticResource CampoLabel}"
+                                           Grid.Column="0" Margin="0,0,8,0"/>
+                                <DatePicker SelectedDate="{Binding FechaDesde}" Grid.Column="1"
+                                            md:HintAssist.Hint="Fecha inicio"
+                                            Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+
+                                <TextBlock Text="Hasta:" Style="{StaticResource CampoLabel}"
+                                           Grid.Column="3" Margin="0,0,8,0"/>
+                                <DatePicker SelectedDate="{Binding FechaHasta}" Grid.Column="4"
+                                            md:HintAssist.Hint="Fecha fin"
+                                            Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </md:Card>
+
+                <!-- ══════════════════════════════════════════ -->
+                <!-- SECCIÓN: LIQUIDACIÓN -->
+                <!-- ══════════════════════════════════════════ -->
+                <StackPanel Visibility="{Binding VisibilidadLiquidacion}">
+                    <TextBlock Style="{StaticResource SeccionHeader}">
+                        <md:PackIcon Kind="Calculator" Width="18" Height="18" Margin="0,0,6,0"/>
+                        <Run Text="Liquidación"/>
+                    </TextBlock>
+
+                    <!-- Card: Liquidación individual PDF -->
+                    <md:Card Style="{StaticResource ReporteCard}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Liquidación Individual" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock Text="Genera el PDF de liquidación de un lote específico (copia proveedor + copia empresa con bono)."
+                                           FontSize="12" Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                           TextWrapping="Wrap" Margin="0,4,0,12"/>
+                            </StackPanel>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ComboBox ItemsSource="{Binding LotesLiquidados}"
+                                          SelectedItem="{Binding LoteSeleccionado}"
+                                          DisplayMemberPath="Display"
+                                          md:HintAssist.Hint="Seleccionar lote"
+                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                          Margin="0,0,12,0"/>
+
+                                <Button Grid.Column="1" Content="GENERAR PDF"
+                                        Command="{Binding GenerarLiquidacionPdfCommand}"
+                                        Style="{StaticResource BotonGenerar}"/>
+                            </Grid>
+                        </Grid>
+                    </md:Card>
+
+                    <!-- Card: Liquidación consolidada Excel -->
+                    <md:Card Style="{StaticResource ReporteCard}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Liquidaciones Consolidadas" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock Text="Exporta todas las liquidaciones del rango de fechas en un archivo Excel."
+                                           FontSize="12" Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="1" Content="EXPORTAR EXCEL"
+                                    Command="{Binding GenerarLiquidacionExcelCommand}"
+                                    Style="{StaticResource BotonGenerarOutline}"/>
+                        </Grid>
+                    </md:Card>
+                </StackPanel>
+
+                <!-- ══════════════════════════════════════════ -->
+                <!-- SECCIÓN: FLOTACIÓN -->
+                <!-- ══════════════════════════════════════════ -->
+                <StackPanel Visibility="{Binding VisibilidadFlotacion}" Margin="0,8,0,0">
+                    <TextBlock Style="{StaticResource SeccionHeader}">
+                        <md:PackIcon Kind="Flask" Width="18" Height="18" Margin="0,0,6,0"/>
+                        <Run Text="Inversión – Flotación"/>
+                    </TextBlock>
+
+                    <md:Card Style="{StaticResource ReporteCard}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Flotación Consolidada" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock Text="Exporta todos los registros de inversión-flotación del rango en Excel."
+                                           FontSize="12" Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="1" Content="EXPORTAR EXCEL"
+                                    Command="{Binding GenerarFlotacionExcelCommand}"
+                                    Style="{StaticResource BotonGenerarOutline}"/>
+                        </Grid>
+                    </md:Card>
+                </StackPanel>
+
+                <!-- ══════════════════════════════════════════ -->
+                <!-- SECCIÓN: CAJA CHICA -->
+                <!-- ══════════════════════════════════════════ -->
+                <StackPanel Margin="0,8,0,0">
+                    <TextBlock Style="{StaticResource SeccionHeader}">
+                        <md:PackIcon Kind="CashRegister" Width="18" Height="18" Margin="0,0,6,0"/>
+                        <Run Text="Caja Chica"/>
+                    </TextBlock>
+
+                    <md:Card Style="{StaticResource ReporteCard}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Libro Diario" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock Text="PDF con todos los movimientos de caja del rango, saldo anterior y saldo final."
+                                           FontSize="12" Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="1" Content="GENERAR PDF"
+                                    Command="{Binding GenerarLibroDiarioPdfCommand}"
+                                    Style="{StaticResource BotonGenerar}"/>
+                        </Grid>
+                    </md:Card>
+                </StackPanel>
+
+                <!-- ══════════════════════════════════════════ -->
+                <!-- SECCIÓN: PROVEEDORES -->
+                <!-- ══════════════════════════════════════════ -->
+                <StackPanel Visibility="{Binding VisibilidadLiquidacion}" Margin="0,8,0,0">
+                    <TextBlock Style="{StaticResource SeccionHeader}">
+                        <md:PackIcon Kind="AccountGroup" Width="18" Height="18" Margin="0,0,6,0"/>
+                        <Run Text="Proveedores"/>
+                    </TextBlock>
+
+                    <md:Card Style="{StaticResource ReporteCard}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Historial por Proveedor" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock Text="PDF con todos los lotes de un proveedor: fechas, pesos, leyes, montos liquidados."
+                                           FontSize="12" Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                           TextWrapping="Wrap" Margin="0,4,0,12"/>
+                            </StackPanel>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ComboBox ItemsSource="{Binding Proveedores}"
+                                          SelectedItem="{Binding ProveedorSeleccionado}"
+                                          DisplayMemberPath="Display"
+                                          md:HintAssist.Hint="Seleccionar proveedor"
+                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                          Margin="0,0,12,0"/>
+
+                                <Button Grid.Column="1" Content="GENERAR PDF"
+                                        Command="{Binding GenerarHistorialProveedorPdfCommand}"
+                                        Style="{StaticResource BotonGenerar}"/>
+                            </Grid>
+                        </Grid>
+                    </md:Card>
+                </StackPanel>
+
+                <StackPanel Height="24"/> <!-- Espaciador final -->
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

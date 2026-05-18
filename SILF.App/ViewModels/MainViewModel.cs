@@ -77,6 +77,7 @@ public partial class MainViewModel : BaseViewModel
             "Liquidación"   => await CrearVistaLiquidacionListAsync(),
             "Flotación"     => await CrearVistaFlotacionAsync(),
             "Caja Chica"    => await CrearVistaCajaChicaAsync(),
+            "Reportes"      => await CrearVistaReportesAsync(),
             "Configuración" => await CrearVistaEmpresaAsync(),
             "Usuarios"      => await CrearVistaUsuariosAsync(),
             "Catálogos"     => await CrearVistaCatalogosAsync(),
@@ -171,6 +172,14 @@ public partial class MainViewModel : BaseViewModel
             NavegarARecibo = async (reciboId) => await NavegarAReciboPreviewAsync(reciboId)
         };
         var vista = new Views.CajaChicaView { DataContext = vm };
+        await vm.CargarDatosCommand.ExecuteAsync(null);
+        return vista;
+    }
+
+    private async Task<Views.ReportesView> CrearVistaReportesAsync()
+    {
+        var vm = new ReportesViewModel(_sesion.EsAdmin);
+        var vista = new Views.ReportesView { DataContext = vm };
         await vm.CargarDatosCommand.ExecuteAsync(null);
         return vista;
     }
