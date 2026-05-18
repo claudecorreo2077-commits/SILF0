@@ -76,6 +76,7 @@ public partial class MainViewModel : BaseViewModel
             "NuevoLote"     => await CrearVistaFormularioLoteAsync(null),
             "Liquidación"   => await CrearVistaLiquidacionListAsync(),
             "Flotación"     => await CrearVistaFlotacionAsync(),
+            "Caja Chica"    => await CrearVistaCajaChicaAsync(),
             "Configuración" => await CrearVistaEmpresaAsync(),
             "Usuarios"      => await CrearVistaUsuariosAsync(),
             "Catálogos"     => await CrearVistaCatalogosAsync(),
@@ -99,6 +100,20 @@ public partial class MainViewModel : BaseViewModel
         IconoModulo = "Calculator"; Breadcrumb = "SILF  ›  Liquidación  ›  Liquidar";
         CargandoVista = true; await Task.Delay(100);
         VistaActual = await CrearVistaLiquidacionDetalleAsync(loteId);
+        CargandoVista = false;
+    }
+
+    public async Task NavegarAReciboPreviewAsync(int reciboId)
+    {
+        SidebarActivo = "Caja Chica"; ModuloSeleccionado = "Recibo";
+        IconoModulo = "Receipt"; Breadcrumb = "SILF  ›  Caja Chica  ›  Recibo";
+        CargandoVista = true; await Task.Delay(100);
+        var vm = new ReciboPreviewViewModel
+        {
+            OnVolver = async () => await NavegarAsync("Caja Chica")
+        };
+        await vm.CargarReciboAsync(reciboId);
+        VistaActual = new Views.ReciboPreviewView { DataContext = vm };
         CargandoVista = false;
     }
 
@@ -147,6 +162,17 @@ public partial class MainViewModel : BaseViewModel
         var vm = new FlotacionViewModel();
         var vista = new Views.FlotacionView { DataContext = vm };
         await vm.CargarDatosCommand.ExecuteAsync(null); return vista;
+    }
+
+    private async Task<Views.CajaChicaView> CrearVistaCajaChicaAsync()
+    {
+        var vm = new CajaChicaViewModel(_sesion.EsAdmin)
+        {
+            NavegarARecibo = async (reciboId) => await NavegarAReciboPreviewAsync(reciboId)
+        };
+        var vista = new Views.CajaChicaView { DataContext = vm };
+        await vm.CargarDatosCommand.ExecuteAsync(null);
+        return vista;
     }
 
     private async Task<Views.EmpresaView> CrearVistaEmpresaAsync()
