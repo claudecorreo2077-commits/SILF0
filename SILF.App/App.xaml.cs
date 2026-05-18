@@ -15,10 +15,15 @@ public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
 
+    private const string DefaultPasswordHash = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
         DispatcherUnhandledException += App_DispatcherUnhandledException;
+
+        // Evitar que WPF cierre la app al cerrar el wizard (antes de abrir el login)
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         try
         {
@@ -35,16 +40,12 @@ public partial class App : Application
                 Source = new Uri("pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml")
             });
 
-            // ══════════════════════════════════════════
-            // COLORES DE ESTADO DE LOTES (globales)
-            // Usar: {DynamicResource EstadoRegistrado}
-            // ══════════════════════════════════════════
-            Resources["EstadoRegistrado"]       = B("#78909C");  // Gris
-            Resources["EstadoAnticipoPagado"]    = B("#42A5F5");  // Azul
-            Resources["EstadoEnLaboratorio"]     = B("#FFA726");  // Ámbar
-            Resources["EstadoLeyesRegistradas"]  = B("#AB47BC");  // Púrpura
-            Resources["EstadoLiquidado"]         = B("#26A69A");  // Teal
-            Resources["EstadoCompletado"]        = B("#66BB6A");  // Verde
+            Resources["EstadoRegistrado"]       = B("#78909C");
+            Resources["EstadoAnticipoPagado"]    = B("#42A5F5");
+            Resources["EstadoEnLaboratorio"]     = B("#FFA726");
+            Resources["EstadoLeyesRegistradas"]  = B("#AB47BC");
+            Resources["EstadoLiquidado"]         = B("#26A69A");
+            Resources["EstadoCompletado"]        = B("#66BB6A");
 
             // ── DI ──
             var services = new ServiceCollection();
@@ -64,7 +65,31 @@ public partial class App : Application
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
             db.Database.EnsureCreated();
 
+            // ══════════════════════════════════════════
+            // WIZARD DE PRIMERA VEZ
+            // ══════════════════════════════════════════
+            var admin = db.Usuarios.FirstOrDefault(u => u.Id == 1);
+            if (admin != null && admin.PasswordHash == DefaultPasswordHash)
+            {
+                var vm = new SetupWizardViewModel();
+                var wizard = new Views.SetupWizardView { DataContext = vm };
+                vm.CerrarVentana = () =>
+                {
+                    wizard.DialogResult = true;
+                    wizard.Close();
+                };
+
+                var resultado = wizard.ShowDialog();
+                if (resultado != true || !vm.Completado)
+                {
+                    Shutdown();
+                    return;
+                }
+            }
+
             // ── Login ──
+            // Volver al modo normal: cerrar app cuando se cierre la última ventana
+            ShutdownMode = ShutdownMode.OnLastWindowClose;
             var login = new Views.LoginView();
             MainWindow = login;
             login.Show();

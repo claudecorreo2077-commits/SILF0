@@ -115,10 +115,45 @@
                         <TextBlock Text="Se usa para convertir valores en las liquidaciones" FontSize="11" Opacity="0.5" Margin="0,2,0,0"/>
                     </StackPanel>
                     <TextBox Grid.Column="1" Style="{StaticResource FI}"
-                             materialDesign:HintAssist.Hint="Ej: 6.97"
+                             materialDesign:HintAssist.Hint="Ej: 6.96"
                              Text="{Binding TipoCambio, UpdateSourceTrigger=LostFocus, StringFormat=0.##}"
                              HorizontalContentAlignment="Right" FontWeight="SemiBold" FontSize="15"
                              GotFocus="NumericField_GotFocus"/>
+                </Grid>
+            </Border>
+
+            <!-- Base de Datos (Exportar / Importar) -->
+            <Border Margin="0,24,0,0" Padding="16" CornerRadius="8"
+                    Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                    BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Base de Datos" FontSize="13" FontWeight="SemiBold" FontFamily="Montserrat"/>
+                        <TextBlock Text="Exportar un respaldo o importar datos desde otra instalación" FontSize="11" Opacity="0.5" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Style="{StaticResource MaterialDesignOutlinedButton}" Command="{Binding ExportarBdCommand}"
+                                FontSize="12" Padding="16,6" Margin="0,0,12,0"
+                                materialDesign:ButtonAssist.CornerRadius="6">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="DatabaseExport" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Exportar Respaldo" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource MaterialDesignOutlinedButton}" Command="{Binding ImportarBdCommand}"
+                                FontSize="12" Padding="16,6"
+                                materialDesign:ButtonAssist.CornerRadius="6"
+                                Foreground="#FF7043" BorderBrush="#FF7043">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="DatabaseImport" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Importar Base de Datos" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 

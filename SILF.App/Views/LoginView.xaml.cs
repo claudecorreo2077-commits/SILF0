@@ -35,4 +35,13 @@ public partial class LoginView : Window
         if (DataContext is LoginViewModel vm)
             vm.Password = PasswordBox.Password;
     }
+
+    private void Window_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && DataContext is LoginViewModel vm
+            && vm.IniciarSesionCommand.CanExecute(null))
+        {
+            vm.IniciarSesionCommand.Execute(null);
+        }
+    }
 }
