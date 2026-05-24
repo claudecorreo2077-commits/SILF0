@@ -2,7 +2,8 @@
 <Window x:Class="SILF.App.Views.SetupWizardView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SILF — Configuración Inicial" Height="600" Width="500"
+        xmlns:b="clr-namespace:SILF.App.Behaviors"
+        Title="SILF — Configuración Inicial" Height="640" Width="500"
         WindowStyle="None" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="Transparent" AllowsTransparency="True"
@@ -175,9 +176,34 @@
                             <TextBox Style="{StaticResource WizardInput}"
                                      Text="{Binding EmpresaIngenio, UpdateSourceTrigger=PropertyChanged}"/>
 
-                            <TextBlock Text="Tipo de Cambio (Bs/$US) *  —  ej: 6.96" Style="{StaticResource WizardLabel}"/>
-                            <TextBox Style="{StaticResource WizardInput}"
-                                     Text="{Binding TipoCambio, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}"/>
+                            <!-- Dos tipos de cambio en una fila -->
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Style="{StaticResource WizardLabel}" Margin="0,0,0,4">
+                                        <Run Text="T/C Regalías *"/>
+                                        <LineBreak/>
+                                        <Run Text="(ej: 6.96)" FontSize="10" FontStyle="Italic" Foreground="#888"/>
+                                    </TextBlock>
+                                    <TextBox Style="{StaticResource WizardInput}"
+                                             b:NumericInput.IsEnabled="True"
+                                             Text="{Binding TipoCambioRegalias, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource WizardLabel}" Margin="0,0,0,4">
+                                        <Run Text="T/C General *"/>
+                                        <LineBreak/>
+                                        <Run Text="(ej: 6.90)" FontSize="10" FontStyle="Italic" Foreground="#888"/>
+                                    </TextBlock>
+                                    <TextBox Style="{StaticResource WizardInput}"
+                                             b:NumericInput.IsEnabled="True"
+                                             Text="{Binding TipoCambioGeneral, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/>
+                                </StackPanel>
+                            </Grid>
 
                             <TextBlock Text="Logo de la empresa" Style="{StaticResource WizardLabel}"/>
                             <Grid Margin="0,4,0,0">
@@ -354,8 +380,10 @@
                                     </MultiBinding>
                                 </TextBlock.Text>
                             </TextBlock>
-                            <TextBlock Text="Tipo de Cambio" Style="{StaticResource SummaryLabel}"/>
-                            <TextBlock Text="{Binding TipoCambio, StringFormat={}{0:N2} Bs/$US}" Style="{StaticResource SummaryValue}"/>
+                            <TextBlock Text="T/C Regalías" Style="{StaticResource SummaryLabel}"/>
+                            <TextBlock Text="{Binding TipoCambioRegalias, StringFormat={}{0:N4} Bs/$US}" Style="{StaticResource SummaryValue}"/>
+                            <TextBlock Text="T/C General" Style="{StaticResource SummaryLabel}"/>
+                            <TextBlock Text="{Binding TipoCambioGeneral, StringFormat={}{0:N4} Bs/$US}" Style="{StaticResource SummaryValue}"/>
 
                             <Border BorderBrush="#333" BorderThickness="0,0,0,1" Padding="0,6,0,6">
                                 <TextBlock Text="ADMINISTRADOR" Foreground="#DA34AE" FontSize="11"

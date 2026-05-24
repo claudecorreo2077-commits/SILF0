@@ -33,7 +33,18 @@ public class Empresa
     [MaxLength(200)]
     public string? NombreLiquidador { get; set; }
 
-    /// <summary>Tipo de cambio USD → Bs. Se usa en liquidaciones.</summary>
+    /// <summary>
+    /// Tipo de cambio USD → Bs usado SOLO para el cálculo de Regalías Mineras (6%).
+    /// Valor referencial: 6.96 (puede modificarse desde Configuración).
+    /// </summary>
     [Column(TypeName = "decimal(8,4)")]
-    public decimal TipoCambio { get; set; } = 6.97m;
+    public decimal TipoCambioRegalias { get; set; } = 6.96m;
+
+    /// <summary>
+    /// Tipo de cambio USD → Bs usado para el resto de cálculos:
+    /// valor comercial, CNS, COMIBOL, FENCOMIN, FEDECOMIN, Cooperativa, IUE.
+    /// Valor referencial: 6.90 (puede modificarse desde Configuración).
+    /// </summary>
+    [Column(TypeName = "decimal(8,4)")]
+    public decimal TipoCambioGeneral { get; set; } = 6.90m;
 }

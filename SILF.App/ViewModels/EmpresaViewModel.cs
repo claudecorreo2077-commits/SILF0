@@ -20,7 +20,11 @@ public partial class EmpresaViewModel : BaseViewModel
     [ObservableProperty] private string _empIngenio = string.Empty;
     [ObservableProperty] private string _empNombreLiquidador = string.Empty;
     [ObservableProperty] private string? _empLogoPath;
-    [ObservableProperty] private decimal _tipoCambio = 6.96m;
+
+    // ── Dos tipos de cambio independientes ──
+    [ObservableProperty] private decimal _tipoCambioRegalias = 6.96m;
+    [ObservableProperty] private decimal _tipoCambioGeneral = 6.90m;
+
     [ObservableProperty] private string _mensaje = string.Empty;
     [ObservableProperty] private bool _mensajeVisible;
 
@@ -42,7 +46,8 @@ public partial class EmpresaViewModel : BaseViewModel
         EmpIngenio = emp.Ingenio ?? string.Empty;
         EmpNombreLiquidador = emp.NombreLiquidador ?? string.Empty;
         EmpLogoPath = emp.LogoPath;
-        TipoCambio = emp.TipoCambio;
+        TipoCambioRegalias = emp.TipoCambioRegalias;
+        TipoCambioGeneral = emp.TipoCambioGeneral;
     }
 
     [RelayCommand]
@@ -70,8 +75,12 @@ public partial class EmpresaViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(EmpRazonSocial))
         { Mensaje = "La razón social es obligatoria."; MensajeVisible = true; return; }
-        if (TipoCambio <= 0)
-        { Mensaje = "El tipo de cambio debe ser mayor a 0."; MensajeVisible = true; return; }
+
+        if (TipoCambioRegalias <= 0)
+        { Mensaje = "El tipo de cambio de Regalías debe ser mayor a 0."; MensajeVisible = true; return; }
+
+        if (TipoCambioGeneral <= 0)
+        { Mensaje = "El tipo de cambio General debe ser mayor a 0."; MensajeVisible = true; return; }
 
         using var db = new SilfDbContext();
         var emp = await db.Empresas.FindAsync(_empresaId);
@@ -85,7 +94,8 @@ public partial class EmpresaViewModel : BaseViewModel
         emp.Ingenio = string.IsNullOrWhiteSpace(EmpIngenio) ? null : EmpIngenio.Trim();
         emp.NombreLiquidador = string.IsNullOrWhiteSpace(EmpNombreLiquidador) ? null : EmpNombreLiquidador.Trim();
         emp.LogoPath = EmpLogoPath;
-        emp.TipoCambio = TipoCambio;
+        emp.TipoCambioRegalias = TipoCambioRegalias;
+        emp.TipoCambioGeneral = TipoCambioGeneral;
 
         await db.SaveChangesAsync();
         Mensaje = "✓ Datos guardados correctamente.";

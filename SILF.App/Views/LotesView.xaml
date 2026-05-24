@@ -66,10 +66,30 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,12">
+        <!-- ═══ BANDA INFORMATIVA: PROCESO ACTIVO ═══ -->
+        <!-- Solo muestra el proceso actual. El botón FLOTAR vive en el módulo Inv. Flotación. -->
+        <Border Grid.Row="0" CornerRadius="8" Margin="0,0,0,10" Padding="14,8"
+                Background="{DynamicResource CardBg}"
+                BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <materialDesign:PackIcon Kind="InformationOutline" Width="18" Height="18"
+                                         Foreground="#462AD8" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Grid.Column="1" Text="{Binding IndicadorProcesoTexto}"
+                           FontFamily="Montserrat" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{DynamicResource ExtensionFg}" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- ═══ FILA DE FILTROS + ACCIONES ═══ -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="160"/>
                 <ColumnDefinition Width="*"/>
@@ -103,7 +123,8 @@
             </Button>
         </Grid>
 
-        <Border Grid.Row="1" CornerRadius="12" Background="{DynamicResource CardBg}"
+        <!-- ═══ TABLA DE LOTES ═══ -->
+        <Border Grid.Row="2" CornerRadius="12" Background="{DynamicResource CardBg}"
                 BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1">
             <Grid>
                 <DataGrid ItemsSource="{Binding LotesFiltrados}" SelectedItem="{Binding LoteSeleccionado}"
@@ -175,11 +196,16 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                         <DataGridTextColumn Header="FECHA" Binding="{Binding FechaRegistro, StringFormat=dd/MM/yyyy}" Width="95"/>
-                        <DataGridTemplateColumn Header="ACCIONES" Width="100">
+                        <DataGridTemplateColumn Header="ACCIONES" Width="140">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Button Style="{StaticResource ActionIconBtn}" ToolTip="Editar"
+                                        <Button Style="{StaticResource ActionIconBtn}" ToolTip="Recibo de Anticipo (PDF)"
+                                                Command="{Binding DataContext.GenerarReciboAnticipoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}">
+                                            <materialDesign:PackIcon Kind="FilePdfBox" Width="18" Height="18" Foreground="#C62828"/>
+                                        </Button>
+                                        <Button Style="{StaticResource ActionIconBtn}" ToolTip="Editar" Margin="4,0,0,0"
                                                 Command="{Binding DataContext.EditarLoteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}">
                                             <materialDesign:PackIcon Kind="Pencil" Width="16" Height="16" Foreground="#42A5F5"/>

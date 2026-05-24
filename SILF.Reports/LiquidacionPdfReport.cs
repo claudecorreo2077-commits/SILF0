@@ -17,6 +17,10 @@ public class LiquidacionPdfData
     public decimal PesoNeto { get; set; }
     public DateTime FechaIngreso { get; set; }
     public DateTime FechaLiquidacion { get; set; }
+    /// <summary>
+    /// T/C usado en cálculo. Se mantiene en el modelo para retrocompatibilidad
+    /// con el ViewModel, pero NO se imprime en el PDF (regla del cliente).
+    /// </summary>
     public decimal TipoCambio { get; set; }
     public decimal LeyZn { get; set; }
     public decimal LeyAg { get; set; }
@@ -51,6 +55,8 @@ public class LiquidacionPdfData
     public string EmpresaNombre { get; set; } = "";
     public string NombreLiquidador { get; set; } = "";
     public byte[]? EmpresaLogo { get; set; }
+    /// <summary>Número del Proceso de Flotación al que pertenece el lote.</summary>
+    public int NumeroProceso { get; set; }
 }
 
 public class LiquidacionPdfReport
@@ -75,7 +81,7 @@ public class LiquidacionPdfReport
                 page.Content().Column(col =>
                 {
                     // ── COPIA PROVEEDOR ──
-                    col.Item().Element(c => CopiaLiquidacion(c, "COPIA PROVEEDOR", mostrarBono: false));
+                    col.Item().Element(c => CopiaLiquidacion(c, "COPIA PROVEEDOR", mostrarControlPago: false));
 
                     // ── LÍNEA DE CORTE ──
                     col.Item().PaddingVertical(3).AlignCenter()
@@ -102,7 +108,7 @@ public class LiquidacionPdfReport
                     col.Item().PaddingVertical(4).LineHorizontal(2).LineColor(Colors.Black);
 
                     // ── COPIA LIQUIDADOR ──
-                    col.Item().Element(c => CopiaLiquidacion(c, "COPIA LIQUIDADOR", mostrarBono: true));
+                    col.Item().Element(c => CopiaLiquidacion(c, "COPIA LIQUIDADOR", mostrarControlPago: true));
                 });
             });
         }).GeneratePdf();
@@ -112,7 +118,7 @@ public class LiquidacionPdfReport
     // GENERA UNA COPIA (se usa 2 veces)
     // ══════════════════════════════════════════
 
-    private void CopiaLiquidacion(IContainer container, string tipoCopia, bool mostrarBono)
+    private void CopiaLiquidacion(IContainer container, string tipoCopia, bool mostrarControlPago)
     {
         container.Column(col =>
         {
@@ -136,7 +142,7 @@ public class LiquidacionPdfReport
                     row.ConstantItem(35);
             });
 
-            // ── Info lote (2 columnas compactas) ──
+            // ── Info lote (2 columnas compactas) — SIN T/C ──
             col.Item().PaddingTop(3).Row(row =>
             {
                 row.RelativeItem().Column(c =>
@@ -149,11 +155,12 @@ public class LiquidacionPdfReport
                 });
                 row.RelativeItem().Column(c =>
                 {
+                    if (_d.NumeroProceso > 0)
+                        I(c, "PROCESO N°:", _d.NumeroProceso.ToString());
                     I(c, "LOTE N°:", _d.NumeroLote.ToString());
                     I(c, "PESO NETO:", $"{_d.PesoNeto:N2} Tn");
                     I(c, "F.INGRESO:", _d.FechaIngreso.ToString("dd/MM/yyyy"));
                     I(c, "F.LIQUID:", _d.FechaLiquidacion.ToString("dd/MM/yyyy"));
-                    I(c, "T/C:", $"{_d.TipoCambio:N2} Bs/$US");
                 });
             });
 
@@ -181,7 +188,7 @@ public class LiquidacionPdfReport
                     F(p, "Plata", _d.ValorBrutoAg);
                     F(p, "Plomo", _d.ValorBrutoPb);
                     F(p, "Total $US", _d.ValorComercialUs, bold: true);
-                    F(p, $"Total Bs", _d.ValorComercialBs, bold: true);
+                    F(p, "Total Bs", _d.ValorComercialBs, bold: true);
                 });
                 row.ConstantItem(4);
                 // Col 2: Ded. Legales
@@ -210,7 +217,7 @@ public class LiquidacionPdfReport
                 });
             });
 
-            // ── Resultado ──
+            // ── Resultado: Valor → Deducciones → Líquido ──
             col.Item().PaddingTop(3).Background(Colors.Grey.Lighten4).Padding(6).Row(row =>
             {
                 row.RelativeItem().Column(r =>
@@ -245,15 +252,29 @@ public class LiquidacionPdfReport
             });
 
             // ── Control de pago (solo en copia liquidador) ──
-            if (mostrarBono)
+            // Muestra: Líquido Pagable, (-) Anticipo, = Saldo por pagar.
+            // El Bono Transporte NO va aquí; tiene su propio recibo recortable arriba.
+            if (mostrarControlPago)
             {
                 col.Item().PaddingTop(2).Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Column(cp =>
                 {
                     cp.Item().Text("CONTROL DE PAGO").FontSize(6).Bold().FontColor(Colors.Grey.Medium);
-                    cp.Item().Row(r => { r.RelativeItem().Text("Anticipo"); r.ConstantItem(100).AlignRight().Text($"Bs {_d.Anticipo:N2}").SemiBold(); });
-                    cp.Item().Row(r => { r.RelativeItem().Text("Bono Transporte"); r.ConstantItem(100).AlignRight().Text($"Bs {_d.BonoTransporte:N2}").SemiBold(); });
-                    cp.Item().PaddingVertical(1).LineHorizontal(0.5f).LineColor(Colors.Grey.Lighten2);
-                    cp.Item().Row(r => { r.RelativeItem().Text("Saldo por pagar").Bold().FontSize(9); r.ConstantItem(100).AlignRight().Text($"Bs {_d.SaldoPagar:N2}").Bold().FontSize(10); });
+                    cp.Item().Row(r =>
+                    {
+                        r.RelativeItem().Text("Líquido Pagable").FontSize(8);
+                        r.ConstantItem(110).AlignRight().Text($"Bs {_d.LiquidoPagable:N2}").FontSize(8).SemiBold();
+                    });
+                    cp.Item().Row(r =>
+                    {
+                        r.RelativeItem().Text("(-) Anticipo").FontSize(8);
+                        r.ConstantItem(110).AlignRight().Text($"Bs {_d.Anticipo:N2}").FontSize(8).SemiBold().FontColor(Colors.Red.Medium);
+                    });
+                    cp.Item().PaddingVertical(2).LineHorizontal(1).LineColor(Colors.Black);
+                    cp.Item().Row(r =>
+                    {
+                        r.RelativeItem().Text("SALDO A PAGAR").Bold().FontSize(10);
+                        r.ConstantItem(110).AlignRight().Text($"Bs {_d.SaldoPagar:N2}").Bold().FontSize(12).FontColor(Colors.Blue.Darken2);
+                    });
                 });
             }
 

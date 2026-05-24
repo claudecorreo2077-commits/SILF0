@@ -17,7 +17,46 @@
         </Style>
     </UserControl.Resources>
     <DockPanel>
-        <!-- BARRA SUPERIOR -->
+        <!-- ═══ BANDA: PROCESO ACTIVO + BOTÓN FLOTAR ═══ -->
+        <Border DockPanel.Dock="Top" CornerRadius="8" Margin="0,0,0,12" Padding="14,8"
+                Background="{DynamicResource MaterialDesignCardBackground}"
+                BorderBrush="#FFA726" BorderThickness="1.5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <md:PackIcon Grid.Column="0" Kind="Factory" Width="22" Height="22"
+                             Foreground="#FFA726" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Grid.Column="1" Text="{Binding IndicadorProcesoTexto}"
+                           FontWeight="SemiBold" FontSize="13"
+                           Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+                           VerticalAlignment="Center"/>
+                <Button Grid.Column="2" Cursor="Hand"
+                        Command="{Binding CortarProcesoCommand}"
+                        ToolTip="Cerrar proceso actual y abrir uno nuevo (reinicia el correlativo de lote)">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" Background="#FFA726"
+                                    CornerRadius="8" Padding="22,9">
+                                <StackPanel Orientation="Horizontal">
+                                    <md:PackIcon Kind="ContentCut" Width="18" Height="18" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="FLOTAR" Foreground="White" FontFamily="Montserrat" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="#FB8C00"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ═══ BARRA SUPERIOR: FILTROS ═══ -->
         <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="160"/><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
@@ -41,7 +80,7 @@
             </Button>
         </Grid>
 
-        <!-- RESUMEN -->
+        <!-- ═══ RESUMEN ═══ -->
         <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
@@ -64,7 +103,7 @@
                     <TextBlock Text="{Binding TotalLaboratorio, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold"/></StackPanel></Border>
         </Grid>
 
-        <!-- TABLA CONSOLIDADA -->
+        <!-- ═══ TABLA CONSOLIDADA ═══ -->
         <md:Card md:ElevationAssist.Elevation="Dp1" Padding="0">
             <DataGrid ItemsSource="{Binding RegistrosView}" AutoGenerateColumns="False" IsReadOnly="True"
                       CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeColumns="True"

@@ -50,9 +50,18 @@ public partial class LiquidacionViewModel : BaseViewModel
     partial void OnCotizacionAgChanged(decimal value) => Recalcular();
     [ObservableProperty] private decimal _cotizacionPb;
     partial void OnCotizacionPbChanged(decimal value) => Recalcular();
-    [ObservableProperty] private decimal _tipoCambio = 6.97m;
-    partial void OnTipoCambioChanged(decimal value) => Recalcular();
+
+    // ── DOS TIPOS DE CAMBIO ──
+    /// <summary>T/C usado únicamente para el cálculo de Regalías Mineras (6%).</summary>
+    [ObservableProperty] private decimal _tipoCambioRegalias = 6.96m;
+    partial void OnTipoCambioRegaliasChanged(decimal value) => Recalcular();
+
+    /// <summary>T/C usado para Valor Comercial, CNS, COMIBOL, FENCOMIN, FEDECOMIN, Cooperativa, IUE.</summary>
+    [ObservableProperty] private decimal _tipoCambioGeneral = 6.90m;
+    partial void OnTipoCambioGeneralChanged(decimal value) => Recalcular();
+
     [ObservableProperty] private decimal _anticipoMonto;
+    partial void OnAnticipoMontoChanged(decimal value) => Recalcular();
 
     [ObservableProperty] private bool _aplicaCooperativa;
     partial void OnAplicaCooperativaChanged(bool value) { if (!value) PorcentajeCooperativa = 0; Recalcular(); }
@@ -93,6 +102,7 @@ public partial class LiquidacionViewModel : BaseViewModel
     [ObservableProperty] private decimal _liquidoPagableUs;
     [ObservableProperty] private decimal _saldoPagar;
     [ObservableProperty] private string _montoLiteral = "";
+    [ObservableProperty] private string _montoLiteralSaldo = "";
     [ObservableProperty] private string _mensajeError = "";
     [ObservableProperty] private bool _tieneError;
 
@@ -111,7 +121,8 @@ public partial class LiquidacionViewModel : BaseViewModel
         var empresa = await db.Empresas.FirstOrDefaultAsync();
         if (empresa != null)
         {
-            TipoCambio = empresa.TipoCambio;
+            TipoCambioRegalias = empresa.TipoCambioRegalias;
+            TipoCambioGeneral = empresa.TipoCambioGeneral;
             _empresaNombre = empresa.RazonSocial ?? "";
             _empresaLiquidador = empresa.NombreLiquidador ?? "";
             if (!string.IsNullOrEmpty(empresa.LogoPath) && File.Exists(empresa.LogoPath))
@@ -148,6 +159,9 @@ public partial class LiquidacionViewModel : BaseViewModel
             CostoLaboratorio = liq.CostoLaboratorio;
             Observaciones = liq.Observaciones ?? "";
             FechaLiquidacion = liq.FechaCalculo ?? DateTime.Today;
+            // El T/C General histórico de la liquidación se guarda en liq.TipoCambio;
+            // si la liquidación es vieja, respetamos su valor para reimpresión coherente.
+            if (liq.TipoCambio > 0) TipoCambioGeneral = liq.TipoCambio;
         }
         else
         {
@@ -162,19 +176,31 @@ public partial class LiquidacionViewModel : BaseViewModel
 
     private void Recalcular()
     {
+        // ── Peso ──
         PesoHumedad = Math.Round(InfoPesoNeto * Humedad / 100m, 2);
         PesoNetoSeco = Math.Round(InfoPesoNeto - PesoHumedad, 2);
+
+        // ── Valor bruto por mineral en USD ──
         ValorBrutoZn = Math.Round(PesoNetoSeco * LeyZn * CotizacionZn, 2);
         ValorBrutoAg = Math.Round(PesoNetoSeco * LeyAg * CotizacionAg, 2);
         ValorBrutoPb = Math.Round(PesoNetoSeco * LeyPb * CotizacionPb, 2);
         ValorComercialUs = Math.Round(ValorBrutoZn + ValorBrutoAg + ValorBrutoPb, 2);
-        ValorComercialBs = Math.Round(ValorComercialUs * TipoCambio, 2);
 
-        Regalias = Math.Round(ValorComercialBs * PctRegalias, 2);
-        Cns = Math.Round(ValorComercialBs * PctCns, 2);
-        Comibol = Math.Round(ValorComercialBs * PctComibol, 2);
+        // ── Conversión a Bs con T/C General (valor comercial oficial) ──
+        ValorComercialBs = Math.Round(ValorComercialUs * TipoCambioGeneral, 2);
+
+        // ── Base alternativa para Regalías con T/C de Regalías ──
+        // No se expone en UI: es un cálculo intermedio para que las Regalías
+        // se computen sobre Valor$US × T/C Regalías en lugar del T/C General.
+        var valorBsBaseRegalias = Math.Round(ValorComercialUs * TipoCambioRegalias, 2);
+
+        // ── Deducciones legales ──
+        Regalias = Math.Round(valorBsBaseRegalias * PctRegalias, 2);   // Usa T/C Regalías (6.96)
+        Cns = Math.Round(ValorComercialBs * PctCns, 2);                // T/C General
+        Comibol = Math.Round(ValorComercialBs * PctComibol, 2);        // T/C General
         TotalDeduccionesLegales = Regalias + Cns + Comibol;
 
+        // ── Otras deducciones (todas con T/C General) ──
         Fencomin = Math.Round(ValorComercialBs * PctFencomin, 2);
         Fedecomin = Math.Round(ValorComercialBs * PctFedecomin, 2);
         MontoCooperativa = AplicaCooperativa ? Math.Round(ValorComercialBs * PorcentajeCooperativa / 100m, 2) : 0m;
@@ -182,10 +208,17 @@ public partial class LiquidacionViewModel : BaseViewModel
         TotalOtrasDeducciones = Fencomin + Fedecomin + MontoCooperativa + Iue;
 
         TotalDeducciones = TotalDeduccionesLegales + TotalOtrasDeducciones;
+
+        // ── Líquido pagable y saldo final ──
         LiquidoPagable = Math.Round(ValorComercialBs - TotalDeducciones, 2);
-        LiquidoPagableUs = TipoCambio > 0 ? Math.Round(LiquidoPagable / TipoCambio, 2) : 0;
+        LiquidoPagableUs = TipoCambioGeneral > 0 ? Math.Round(LiquidoPagable / TipoCambioGeneral, 2) : 0;
         SaldoPagar = Math.Round(LiquidoPagable - AnticipoMonto, 2);
+
+        // ── Literales para impresión ──
+        // MontoLiteral = monto en literal del Líquido Pagable (hoja completa de liquidación).
+        // MontoLiteralSaldo = monto en literal del Saldo a Pagar (recibo final, lo que se entrega).
         MontoLiteral = NumeroALiteral(LiquidoPagable);
+        MontoLiteralSaldo = NumeroALiteral(SaldoPagar);
     }
 
     [RelayCommand]
@@ -212,7 +245,9 @@ public partial class LiquidacionViewModel : BaseViewModel
 
             liq.Humedad = Humedad; liq.CotizacionZn = CotizacionZn;
             liq.CotizacionAg = CotizacionAg; liq.CotizacionPb = CotizacionPb;
-            liq.TipoCambio = TipoCambio;
+            // Guardamos el T/C General como TipoCambio histórico de la liquidación
+            // (compatibilidad con el modelo Liquidacion existente).
+            liq.TipoCambio = TipoCambioGeneral;
             liq.PesoHumedad = PesoHumedad; liq.PesoNetoSeco = PesoNetoSeco;
             liq.ValorBrutoZn = ValorBrutoZn; liq.ValorBrutoAg = ValorBrutoAg;
             liq.ValorBrutoPb = ValorBrutoPb; liq.ValorComercialUs = ValorComercialUs;
@@ -305,7 +340,9 @@ public partial class LiquidacionViewModel : BaseViewModel
         Cooperativa = InfoCooperativa, TipoMineral = InfoTipoMineral,
         NumeroLote = InfoNumeroLote, PesoNeto = InfoPesoNeto,
         FechaIngreso = InfoFechaIngreso, FechaLiquidacion = FechaLiquidacion,
-        TipoCambio = TipoCambio,
+        // Para el PDF actual seguimos pasando un T/C "principal" (el General).
+        // En el Bloque 5 ampliamos LiquidacionPdfData para incluir ambos.
+        TipoCambio = TipoCambioGeneral,
         LeyZn = LeyZn, LeyAg = LeyAg, LeyPb = LeyPb,
         Humedad = Humedad, CostoLaboratorio = CostoLaboratorio,
         PesoHumedad = PesoHumedad, PesoNetoSeco = PesoNetoSeco,

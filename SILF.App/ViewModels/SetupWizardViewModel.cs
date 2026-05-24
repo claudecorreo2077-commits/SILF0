@@ -47,7 +47,11 @@ public partial class SetupWizardViewModel : ObservableObject
     [ObservableProperty] private string _empresaNombre = "";
     [ObservableProperty] private string _empresaMunicipio = "";
     [ObservableProperty] private string _empresaIngenio = "";
-    [ObservableProperty] private decimal _tipoCambio = 6.96m;
+
+    // ── Dos tipos de cambio independientes ──
+    [ObservableProperty] private decimal _tipoCambioRegalias = 6.96m;
+    [ObservableProperty] private decimal _tipoCambioGeneral = 6.90m;
+
     [ObservableProperty] private string? _logoPath;
     [ObservableProperty] private string _logoInfo = "Sin logo seleccionado";
     [ObservableProperty] private BitmapImage? _logoPreview;
@@ -167,9 +171,15 @@ public partial class SetupWizardViewModel : ObservableObject
                     TieneError = true;
                     return;
                 }
-                if (TipoCambio <= 0)
+                if (TipoCambioRegalias <= 0)
                 {
-                    MensajeError = "El tipo de cambio debe ser mayor a cero.";
+                    MensajeError = "El T/C para Regalías debe ser mayor a cero.";
+                    TieneError = true;
+                    return;
+                }
+                if (TipoCambioGeneral <= 0)
+                {
+                    MensajeError = "El T/C General debe ser mayor a cero.";
                     TieneError = true;
                     return;
                 }
@@ -223,7 +233,8 @@ public partial class SetupWizardViewModel : ObservableObject
                 empresa.RazonSocial = EmpresaNombre.Trim();
                 empresa.Municipio = string.IsNullOrWhiteSpace(EmpresaMunicipio) ? null : EmpresaMunicipio.Trim();
                 empresa.Ingenio = string.IsNullOrWhiteSpace(EmpresaIngenio) ? null : EmpresaIngenio.Trim();
-                empresa.TipoCambio = TipoCambio;
+                empresa.TipoCambioRegalias = TipoCambioRegalias;
+                empresa.TipoCambioGeneral = TipoCambioGeneral;
                 empresa.NombreLiquidador = AdminNombreCompleto.Trim();
 
                 if (!string.IsNullOrEmpty(LogoPath) && File.Exists(LogoPath))

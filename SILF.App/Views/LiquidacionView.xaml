@@ -2,7 +2,8 @@
 <UserControl x:Class="SILF.App.Views.LiquidacionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes">
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:b="clr-namespace:SILF.App.Behaviors">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style x:Key="Lbl" TargetType="TextBlock"><Setter Property="FontSize" Value="12"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/></Style>
@@ -31,17 +32,32 @@
                     <!-- INFO LOTE -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                        <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,3"><TextBlock Text="NOMBRE: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Text="{Binding InfoProveedor}" Style="{StaticResource Lbl}"/></StackPanel>
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,3"><TextBlock Text="CI/NIT: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Text="{Binding InfoCiNit}" Style="{StaticResource Lbl}"/></StackPanel>
                         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,3"><TextBlock Text="MINA: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Text="{Binding InfoMina}" Style="{StaticResource Lbl}"/></StackPanel>
                         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,3"><TextBlock Text="COOPERATIVA: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Text="{Binding InfoCooperativa}" Style="{StaticResource Lbl}"/></StackPanel>
                         <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,3"><TextBlock Text="TIPO: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Text="{Binding InfoTipoMineral}" Style="{StaticResource Lbl}" FontWeight="Bold" Foreground="{DynamicResource SecondaryHueMidBrush}"/></StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,3"><TextBlock Text="LOTE N°: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Text="{Binding InfoNumeroLote}" Style="{StaticResource Lbl}" FontWeight="Bold"/></StackPanel>
-                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,3"><TextBlock Text="PESO NETO: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBox Text="{Binding InfoPesoNeto, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignTextBox}" FontSize="12" FontWeight="Bold" Width="100" Padding="2" VerticalAlignment="Center" md:TextFieldAssist.DecorationVisibility="Hidden"/><TextBlock Text=" Tn" Style="{StaticResource Lbl}" Opacity="0.6"/></StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,3">
+                            <TextBlock Text="PESO NETO: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding InfoPesoNeto, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                     b:NumericInput.IsEnabled="True"
+                                     Style="{StaticResource MaterialDesignTextBox}" FontSize="12" FontWeight="Bold" Width="100" Padding="2" VerticalAlignment="Center" md:TextFieldAssist.DecorationVisibility="Hidden"/>
+                            <TextBlock Text=" Tn" Style="{StaticResource Lbl}" Opacity="0.6"/>
+                        </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,3"><TextBlock Text="F. INGRESO: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Text="{Binding InfoFechaIngreso, StringFormat='{}{0:dd/MM/yyyy}'}" Style="{StaticResource Lbl}"/></StackPanel>
                         <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,3"><TextBlock Text="F. LIQUIDACIÓN: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><DatePicker SelectedDate="{Binding FechaLiquidacion}" Style="{StaticResource MaterialDesignDatePicker}" Width="140" FontSize="12"/></StackPanel>
-                        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,3"><TextBlock Text="T/C: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Text="{Binding TipoCambio, StringFormat='{}{0:N2}'}" Style="{StaticResource Lbl}" FontWeight="Bold"/><TextBlock Text=" Bs/$US" Style="{StaticResource Lbl}" Opacity="0.6"/></StackPanel>
+                        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,3">
+                            <TextBlock Text="T/C REGALÍAS: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding TipoCambioRegalias, StringFormat='{}{0:N4}'}" Style="{StaticResource Lbl}" FontWeight="Bold"/>
+                            <TextBlock Text=" Bs/$US" Style="{StaticResource Lbl}" Opacity="0.6"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,3">
+                            <TextBlock Text="T/C GENERAL: " Style="{StaticResource Lbl}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding TipoCambioGeneral, StringFormat='{}{0:N4}'}" Style="{StaticResource Lbl}" FontWeight="Bold"/>
+                            <TextBlock Text=" Bs/$US" Style="{StaticResource Lbl}" Opacity="0.6"/>
+                        </StackPanel>
                     </Grid>
                     <Border Style="{StaticResource Sep}"/>
 
@@ -49,20 +65,44 @@
                     <TextBlock Text="LEYES DEL LABORATORIO" FontSize="13" FontWeight="Bold" Margin="0,12,0,8" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
                     <Grid Margin="0,0,0,6">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Margin="0,0,6,0" md:HintAssist.Hint="Ley ZN (%)" md:HintAssist.IsFloating="True" Text="{Binding LeyZn, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="1" Margin="6,0" md:HintAssist.Hint="Ley AG (oz/tc)" md:HintAssist.IsFloating="True" Text="{Binding LeyAg, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="2" Margin="6,0" md:HintAssist.Hint="Ley PB (%)" md:HintAssist.IsFloating="True" Text="{Binding LeyPb, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="3" Margin="6,0" md:HintAssist.Hint="% Humedad" md:HintAssist.IsFloating="True" Text="{Binding Humedad, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="4" Margin="6,0,0,0" md:HintAssist.Hint="Costo Lab. (Bs)" md:HintAssist.IsFloating="True" Text="{Binding CostoLaboratorio, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="0" Margin="0,0,6,0" md:HintAssist.Hint="Ley ZN (%)" md:HintAssist.IsFloating="True"
+                                 b:NumericInput.IsEnabled="True"
+                                 Text="{Binding LeyZn, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="1" Margin="6,0" md:HintAssist.Hint="Ley AG (oz/tc)" md:HintAssist.IsFloating="True"
+                                 b:NumericInput.IsEnabled="True"
+                                 Text="{Binding LeyAg, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="2" Margin="6,0" md:HintAssist.Hint="Ley PB (%)" md:HintAssist.IsFloating="True"
+                                 b:NumericInput.IsEnabled="True"
+                                 Text="{Binding LeyPb, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="3" Margin="6,0" md:HintAssist.Hint="% Humedad" md:HintAssist.IsFloating="True"
+                                 b:NumericInput.IsEnabled="True"
+                                 Text="{Binding Humedad, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="4" Margin="6,0,0,0" md:HintAssist.Hint="Costo Lab. (Bs)" md:HintAssist.IsFloating="True"
+                                 b:NumericInput.IsEnabled="True"
+                                 Text="{Binding CostoLaboratorio, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </Grid>
 
                     <!-- COTIZACIONES -->
                     <TextBlock Text="COTIZACIONES DEL DÍA" FontSize="13" FontWeight="Bold" Margin="0,8,0,8" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Margin="0,0,6,0" md:HintAssist.Hint="Precio ZN ($US)" md:HintAssist.IsFloating="True" Text="{Binding CotizacionZn, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="1" Margin="6,0" md:HintAssist.Hint="Precio AG ($US)" md:HintAssist.IsFloating="True" Text="{Binding CotizacionAg, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="2" Margin="6,0,0,0" md:HintAssist.Hint="Precio PB ($US)" md:HintAssist.IsFloating="True" Text="{Binding CotizacionPb, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="0" Margin="0,0,6,0" md:HintAssist.Hint="Precio ZN ($US)" md:HintAssist.IsFloating="True"
+                                 b:NumericInput.IsEnabled="True"
+                                 Text="{Binding CotizacionZn, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="1" Margin="6,0" md:HintAssist.Hint="Precio AG ($US)" md:HintAssist.IsFloating="True"
+                                 b:NumericInput.IsEnabled="True"
+                                 Text="{Binding CotizacionAg, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="2" Margin="6,0,0,0" md:HintAssist.Hint="Precio PB ($US)" md:HintAssist.IsFloating="True"
+                                 b:NumericInput.IsEnabled="True"
+                                 Text="{Binding CotizacionPb, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </Grid>
                     <Border Style="{StaticResource Sep}"/>
 
@@ -97,7 +137,7 @@
                             <Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions>
                                 <TextBlock Text="Total $US" Style="{StaticResource Lbl}" FontWeight="SemiBold"/><TextBlock Grid.Column="1" Text="{Binding ValorComercialUs, StringFormat='{}{0:N2}'}" Style="{StaticResource Tot}"/></Grid>
                             <Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions>
-                                <TextBlock Style="{StaticResource Lbl}" FontWeight="Bold" FontSize="14"><Run Text="Total Bs (× T/C "/><Run Text="{Binding TipoCambio, StringFormat='{}{0:N2}', Mode=OneWay}"/><Run Text=")"/></TextBlock>
+                                <TextBlock Style="{StaticResource Lbl}" FontWeight="Bold" FontSize="14"><Run Text="Total Bs (× T/C General "/><Run Text="{Binding TipoCambioGeneral, StringFormat='{}{0:N4}', Mode=OneWay}"/><Run Text=")"/></TextBlock>
                                 <TextBlock Grid.Column="1" Text="{Binding ValorComercialBs, StringFormat='{}{0:N2}'}" Style="{StaticResource Tot}" FontSize="16"/></Grid>
                         </StackPanel>
                     </Border>
@@ -107,7 +147,13 @@
                     <Border BorderThickness="1" BorderBrush="{DynamicResource MaterialDesignDivider}" CornerRadius="4" Padding="12,8">
                         <StackPanel>
                             <Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="60"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions>
-                                <TextBlock Text="Regalías Mineras" Style="{StaticResource Lbl}"/><TextBlock Grid.Column="1" Text="6.00%" Style="{StaticResource Lbl}" HorizontalAlignment="Right"/><TextBlock Grid.Column="2" Text="{Binding Regalias, StringFormat='{}{0:N2}'}" Style="{StaticResource Val}"/></Grid>
+                                <StackPanel>
+                                    <TextBlock Text="Regalías Mineras" Style="{StaticResource Lbl}"/>
+                                    <TextBlock Style="{StaticResource Lbl}" FontSize="10" Opacity="0.6"><Run Text="(usa T/C Regalías "/><Run Text="{Binding TipoCambioRegalias, StringFormat='{}{0:N4}', Mode=OneWay}"/><Run Text=")"/></TextBlock>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="6.00%" Style="{StaticResource Lbl}" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Regalias, StringFormat='{}{0:N2}'}" Style="{StaticResource Val}"/>
+                            </Grid>
                             <Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="60"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions>
                                 <TextBlock Text="CNS" Style="{StaticResource Lbl}"/><TextBlock Grid.Column="1" Text="1.80%" Style="{StaticResource Lbl}" HorizontalAlignment="Right"/><TextBlock Grid.Column="2" Text="{Binding Cns, StringFormat='{}{0:N2}'}" Style="{StaticResource Val}"/></Grid>
                             <Grid Margin="0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="60"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions>
@@ -131,7 +177,8 @@
                                 <CheckBox IsChecked="{Binding AplicaCooperativa}" Style="{StaticResource MaterialDesignCheckBox}" Margin="-4,0,0,0"/>
                                 <TextBlock Grid.Column="1" Text="Cooperativa" Style="{StaticResource Lbl}"/>
                                 <TextBox Grid.Column="2" Margin="0,0,8,0" md:HintAssist.Hint="%" IsEnabled="{Binding AplicaCooperativa}"
-                                         Text="{Binding PorcentajeCooperativa, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:N2}'}"
+                                         b:NumericInput.IsEnabled="True"
+                                         Text="{Binding PorcentajeCooperativa, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}" md:TextFieldAssist.DecorationVisibility="Hidden"
                                          FontSize="12" Padding="4,2" HorizontalContentAlignment="Right"/>
                                 <TextBlock Grid.Column="3" Text="{Binding MontoCooperativa, StringFormat='{}{0:N2}'}" Style="{StaticResource Val}"/></Grid>
@@ -166,6 +213,7 @@
                             <Grid Margin="0,4"><TextBlock Text="Anticipo entregado" Style="{StaticResource Lbl}"/><TextBlock Text="{Binding AnticipoMonto, StringFormat='Bs {0:N2}'}" HorizontalAlignment="Right" Style="{StaticResource Lbl}" FontWeight="SemiBold"/></Grid>
                             <Border Style="{StaticResource Sep}"/>
                             <Grid Margin="0,4"><TextBlock Text="Saldo por pagar" Style="{StaticResource Lbl}" FontWeight="Bold" FontSize="14"/><TextBlock Text="{Binding SaldoPagar, StringFormat='Bs {0:N2}'}" HorizontalAlignment="Right" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource PrimaryHueMidBrush}"/></Grid>
+                            <TextBlock Text="{Binding MontoLiteralSaldo}" FontSize="10" FontStyle="Italic" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
 

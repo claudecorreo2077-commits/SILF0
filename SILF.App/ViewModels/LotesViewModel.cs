@@ -1,12 +1,17 @@
 // Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LotesViewModel.cs
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Win32;
 using SILF.Core.Enums;
+using SILF.Core.Models;
 using SILF.Data;
+using SILF.Reports;
 
 namespace SILF.App.ViewModels;
 
@@ -32,6 +37,12 @@ public partial class LotesViewModel : BaseViewModel
     [ObservableProperty] private LoteResumen? _loteSeleccionado;
     [ObservableProperty] private bool _sinResultados;
 
+    // ── Proceso de Flotación actual (solo informativo en esta vista) ──
+    // El botón FLOTAR (cortar proceso) vive en el módulo Inv. Flotación.
+    [ObservableProperty] private int _numeroProcesoActual;
+    [ObservableProperty] private DateTime _fechaAperturaProceso;
+    [ObservableProperty] private string _indicadorProcesoTexto = "Cargando...";
+
     partial void OnFiltroEstadoSeleccionadoChanged(string value) => AplicarFiltros();
     partial void OnTextoBusquedaChanged(string value) => AplicarFiltros();
 
@@ -44,8 +55,28 @@ public partial class LotesViewModel : BaseViewModel
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
 
+            // Cargar proceso activo (para mostrar en la banda informativa)
+            var procesoActivo = await db.ProcesosFlotacion
+                .Where(p => p.Estado == EstadoProcesoFlotacion.Abierto)
+                .OrderByDescending(p => p.NumeroProceso)
+                .FirstOrDefaultAsync();
+
+            if (procesoActivo != null)
+            {
+                NumeroProcesoActual = procesoActivo.NumeroProceso;
+                FechaAperturaProceso = procesoActivo.FechaApertura;
+                IndicadorProcesoTexto =
+                    $"Trabajando en el Proceso #{procesoActivo.NumeroProceso}  ·  Abierto desde {procesoActivo.FechaApertura:dd/MM/yyyy HH:mm}  ·  El corte se hace desde Inv. Flotación";
+            }
+            else
+            {
+                IndicadorProcesoTexto = "⚠ Sin proceso abierto — abrir uno desde Inv. Flotación";
+            }
+
+            // Cargar lotes del proceso activo
             _todosLosLotes = await db.Lotes
                 .Include(l => l.Proveedor).Include(l => l.Mina)
+                .Where(l => procesoActivo == null || l.ProcesoFlotacionId == procesoActivo.Id)
                 .OrderByDescending(l => l.FechaRegistro)
                 .Select(l => new LoteResumen
                 {
@@ -100,5 +131,83 @@ public partial class LotesViewModel : BaseViewModel
         }
         catch (Exception ex)
         { MessageBox.Show($"Error: {ex.InnerException?.Message ?? ex.Message}", "SILF", MessageBoxButton.OK, MessageBoxImage.Warning); }
+    }
+
+    // ══════════════════════════════════════════
+    // RECIBO DE ANTICIPO (PDF)
+    // ══════════════════════════════════════════
+
+    [RelayCommand]
+    private async Task GenerarReciboAnticipoAsync(LoteResumen? r)
+    {
+        if (r == null) return;
+
+        try
+        {
+            using var scope = App.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+
+            var lote = await db.Lotes
+                .Include(l => l.Proveedor)
+                .Include(l => l.Mina)
+                .Include(l => l.Pago)
+                .Include(l => l.ProcesoFlotacion)
+                .FirstOrDefaultAsync(l => l.Id == r.Id);
+
+            if (lote == null)
+            {
+                MessageBox.Show("Lote no encontrado.", "SILF",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (lote.Pago == null || lote.Pago.Anticipo <= 0)
+            {
+                MessageBox.Show("Este lote no tiene anticipo registrado.", "SILF",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var empresa = await db.Empresas.FirstOrDefaultAsync();
+
+            byte[]? logo = null;
+            if (empresa != null && !string.IsNullOrEmpty(empresa.LogoPath) && File.Exists(empresa.LogoPath))
+                logo = await File.ReadAllBytesAsync(empresa.LogoPath);
+
+            var data = new ReciboAnticipoData
+            {
+                EmpresaNombre = empresa?.RazonSocial ?? "",
+                EmpresaNit = empresa?.NIT ?? "",
+                EmpresaMunicipio = empresa?.Municipio ?? "",
+                NombreLiquidador = empresa?.NombreLiquidador ?? "",
+                Logo = logo,
+                NumeroProceso = lote.ProcesoFlotacion?.NumeroProceso ?? 0,
+                NumeroLote = lote.NumeroLote,
+                ProveedorNombre = lote.Proveedor.NombreCompleto,
+                ProveedorCi = lote.Proveedor.CiNit,
+                Mina = lote.Mina.Nombre,
+                Monto = lote.Pago.Anticipo,
+                Fecha = lote.Pago.FechaAnticipo ?? lote.FechaRegistro
+            };
+
+            var sfd = new SaveFileDialog
+            {
+                FileName = $"ReciboAnticipo_P{data.NumeroProceso:00}-L{data.NumeroLote:000}.pdf",
+                Filter = "PDF (*.pdf)|*.pdf",
+                Title = "Guardar Recibo de Anticipo"
+            };
+
+            if (sfd.ShowDialog() != true) return;
+
+            ReciboAnticipoPdfGenerator.Generar(data, sfd.FileName);
+
+            // Abrir el PDF
+            Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al generar el recibo: {ex.InnerException?.Message ?? ex.Message}",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 }

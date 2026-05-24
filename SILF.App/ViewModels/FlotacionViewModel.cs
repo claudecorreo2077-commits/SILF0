@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
+using SILF.Core.Enums;
 using SILF.Core.Models;
 using SILF.Data;
 using SILF.Reports;
@@ -18,8 +19,6 @@ namespace SILF.App.ViewModels;
 
 public partial class FlotacionViewModel : BaseViewModel
 {
-    private const int LotesPorProceso = 70;
-
     public ObservableCollection<FlotacionRegistro> Registros { get; } = new();
     public ICollectionView RegistrosView { get; }
 
@@ -30,7 +29,12 @@ public partial class FlotacionViewModel : BaseViewModel
     public ObservableCollection<string> FiltrosProceso { get; } = new() { "Todos" };
     public ObservableCollection<string> FiltrosMina { get; } = new() { "Todos" };
 
-    // Totales
+    // ── Proceso actual (banda informativa + botón FLOTAR) ──
+    [ObservableProperty] private int _numeroProcesoActual;
+    [ObservableProperty] private DateTime _fechaAperturaProceso;
+    [ObservableProperty] private string _indicadorProcesoTexto = "Cargando...";
+
+    // ── Totales ──
     [ObservableProperty] private decimal _totalValorComercial;
     [ObservableProperty] private decimal _totalDeducciones;
     [ObservableProperty] private decimal _totalBonoTransporte;
@@ -71,27 +75,46 @@ public partial class FlotacionViewModel : BaseViewModel
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
 
+            // ── 1) Proceso activo (banda informativa) ──
+            var procesoActivo = await db.ProcesosFlotacion
+                .Where(p => p.Estado == EstadoProcesoFlotacion.Abierto)
+                .OrderByDescending(p => p.NumeroProceso)
+                .FirstOrDefaultAsync();
+
+            if (procesoActivo != null)
+            {
+                NumeroProcesoActual = procesoActivo.NumeroProceso;
+                FechaAperturaProceso = procesoActivo.FechaApertura;
+                var cantLotes = await db.Lotes.CountAsync(l => l.ProcesoFlotacionId == procesoActivo.Id);
+                IndicadorProcesoTexto =
+                    $"Proceso #{procesoActivo.NumeroProceso} ABIERTO  ·  Desde {procesoActivo.FechaApertura:dd/MM/yyyy HH:mm}  ·  {cantLotes} lote{(cantLotes == 1 ? "" : "s")} cargado{(cantLotes == 1 ? "" : "s")}";
+            }
+            else
+            {
+                IndicadorProcesoTexto = "⚠ Sin proceso abierto";
+            }
+
+            // ── 2) Lotes con liquidación (todos los procesos para el histórico) ──
             var lotes = await db.Lotes
                 .Include(l => l.Proveedor).ThenInclude(p => p.Cooperativa)
                 .Include(l => l.Mina)
                 .Include(l => l.Liquidacion)
                 .Include(l => l.BonoTransporte)
+                .Include(l => l.ProcesoFlotacion)
                 .Where(l => l.Visible && l.Liquidacion != null)
-                .OrderBy(l => l.NumeroLote)
+                .OrderByDescending(l => l.ProcesoFlotacion.NumeroProceso)
+                .ThenBy(l => l.NumeroLote)
                 .ToListAsync();
 
-            // Calcular procesos
             var minas = new HashSet<string>();
             var procesos = new HashSet<string>();
 
             Registros.Clear();
-            for (int i = 0; i < lotes.Count; i++)
+            foreach (var l in lotes)
             {
-                var l = lotes[i];
                 var liq = l.Liquidacion!;
-                var numeroProceso = (i / LotesPorProceso) + 1;
-                var numeroEnProceso = (i % LotesPorProceso) + 1;
-                var procesoLabel = $"Proceso {numeroProceso:D2}";
+                var numProc = l.ProcesoFlotacion?.NumeroProceso ?? 0;
+                var procesoLabel = $"Proceso {numProc:D2}";
 
                 minas.Add(l.Mina.Nombre);
                 procesos.Add(procesoLabel);
@@ -99,9 +122,9 @@ public partial class FlotacionViewModel : BaseViewModel
                 Registros.Add(new FlotacionRegistro
                 {
                     LoteId = l.Id,
-                    Proceso = numeroProceso,
+                    Proceso = numProc,
                     ProcesoLabel = procesoLabel,
-                    NumeroEnProceso = numeroEnProceso,
+                    NumeroEnProceso = l.NumeroLote,  // ahora ya está reseteado por proceso
                     NumeroLote = l.NumeroLote,
                     Ticket = l.Ticket ?? "",
                     FechaIngreso = l.FechaRegistro,
@@ -132,7 +155,7 @@ public partial class FlotacionViewModel : BaseViewModel
             // Filtros
             FiltrosProceso.Clear();
             FiltrosProceso.Add("Todos");
-            foreach (var p in procesos.OrderBy(p => p)) FiltrosProceso.Add(p);
+            foreach (var p in procesos.OrderByDescending(p => p)) FiltrosProceso.Add(p);
 
             FiltrosMina.Clear();
             FiltrosMina.Add("Todos");
@@ -156,6 +179,70 @@ public partial class FlotacionViewModel : BaseViewModel
         TotalBonoTransporte = visibles.Sum(r => r.BonoTransporte);
         TotalLiquidoPagable = visibles.Sum(r => r.LiquidoPagable);
         TotalLaboratorio = visibles.Sum(r => r.CostoLaboratorio);
+    }
+
+    // ══════════════════════════════════════════
+    // BOTÓN FLOTAR — corte manual del proceso
+    // ══════════════════════════════════════════
+
+    [RelayCommand]
+    private async Task CortarProcesoAsync()
+    {
+        try
+        {
+            using var scope = App.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+
+            var procesoActual = await db.ProcesosFlotacion
+                .Where(p => p.Estado == EstadoProcesoFlotacion.Abierto)
+                .OrderByDescending(p => p.NumeroProceso)
+                .FirstOrDefaultAsync();
+
+            if (procesoActual == null)
+            {
+                MessageBox.Show("No hay proceso de flotación abierto.", "SILF",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var cantLotes = await db.Lotes.CountAsync(l => l.ProcesoFlotacionId == procesoActual.Id);
+            var nuevoNumero = procesoActual.NumeroProceso + 1;
+
+            var mensaje =
+                $"¿Cerrar el Proceso #{procesoActual.NumeroProceso} y abrir el Proceso #{nuevoNumero}?\n\n" +
+                $"El proceso actual tiene {cantLotes} lote{(cantLotes == 1 ? "" : "s")}.\n" +
+                $"El correlativo de lote se reiniciará desde 1 para el nuevo proceso.\n\n" +
+                $"Esta acción no se puede deshacer.";
+
+            if (MessageBox.Show(mensaje, "FLOTAR — Cortar Proceso",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+
+            procesoActual.Estado = EstadoProcesoFlotacion.Cerrado;
+            procesoActual.FechaCierre = DateTime.Now;
+
+            var nuevo = new ProcesoFlotacion
+            {
+                NumeroProceso = nuevoNumero,
+                FechaApertura = DateTime.Now,
+                Estado = EstadoProcesoFlotacion.Abierto
+            };
+            db.ProcesosFlotacion.Add(nuevo);
+
+            await db.SaveChangesAsync();
+
+            MessageBox.Show(
+                $"✓ Proceso #{procesoActual.NumeroProceso} cerrado.\n" +
+                $"✓ Proceso #{nuevoNumero} abierto.\n\n" +
+                $"Los nuevos lotes se registrarán en el Proceso #{nuevoNumero}.",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            await CargarDatosAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al cortar proceso: {ex.InnerException?.Message ?? ex.Message}",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     [RelayCommand]

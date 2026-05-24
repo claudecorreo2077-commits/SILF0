@@ -6,8 +6,8 @@ namespace SILF.Core.Models;
 
 /// <summary>
 /// Lote de mineral. Entidad central del sistema.
-/// Cada lote pasa por 6 estados: Registrado → AnticipoPagado → EnLaboratorio → 
-/// LeyesRegistradas → Liquidado → Completado.
+/// Cada lote pertenece a un Proceso de Flotación y pasa por 6 estados:
+/// Registrado → AnticipoPagado → EnLaboratorio → LeyesRegistradas → Liquidado → Completado.
 /// Cada lote genera 1 Liquidación y 1 Flotación (simultáneas).
 /// </summary>
 public class Lote
@@ -18,10 +18,14 @@ public class Lote
     [MaxLength(50)]
     public string? Ticket { get; set; }
 
-    /// <summary>Número de lote correlativo. Se resetea cada 70 toneladas.</summary>
+    /// <summary>
+    /// Número de lote correlativo DENTRO del proceso de flotación.
+    /// Se reinicia desde 1 con cada nuevo proceso (botón FLOTAR).
+    /// El identificador único del lote es (NumeroProceso, NumeroLote).
+    /// </summary>
     public int NumeroLote { get; set; }
 
-    /// <summary>Proceso: COMPLEJO o BROSA. Se auto-clasifica al registrar leyes.</summary>
+    /// <summary>Proceso: COMPLEJO o BROSA. Se registra manualmente.</summary>
     public TipoMineral? TipoMineral { get; set; }
 
     /// <summary>Estado actual del lote en la máquina de estados.</summary>
@@ -81,6 +85,10 @@ public class Lote
 
     public int MinaId { get; set; }
     public Mina Mina { get; set; } = null!;
+
+    /// <summary>FK al Proceso de Flotación al que pertenece este lote.</summary>
+    public int ProcesoFlotacionId { get; set; }
+    public ProcesoFlotacion ProcesoFlotacion { get; set; } = null!;
 
     // ── Navegación 1:1 ──
     public Liquidacion? Liquidacion { get; set; }

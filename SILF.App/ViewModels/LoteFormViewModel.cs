@@ -105,7 +105,6 @@ public partial class LoteFormViewModel : BaseViewModel
     // PROVEEDORES: DROPDOWN + AUTOCOMPLETADO
     // ══════════════════════════════════════════
 
-    /// <summary>Muestra todos los proveedores al hacer clic en el campo CI/NIT.</summary>
     [RelayCommand]
     private async Task MostrarTodosProveedoresAsync()
     {
@@ -132,7 +131,6 @@ public partial class LoteFormViewModel : BaseViewModel
         catch { }
     }
 
-    /// <summary>Filtra proveedores mientras el usuario escribe.</summary>
     [RelayCommand]
     private async Task BuscarProveedorAsync()
     {
@@ -222,10 +220,29 @@ public partial class LoteFormViewModel : BaseViewModel
             }
             else
             {
-                var ult = await db.Lotes.MaxAsync(l => (int?)l.NumeroLote) ?? 0;
+                // ── NUEVO LOTE ──
+                // 1) Obtener el proceso abierto (debe haber siempre uno por la migración).
+                var procesoActivo = await db.ProcesosFlotacion
+                    .Where(p => p.Estado == EstadoProcesoFlotacion.Abierto)
+                    .OrderByDescending(p => p.NumeroProceso)
+                    .FirstOrDefaultAsync();
+
+                if (procesoActivo == null)
+                {
+                    MostrarErr("No hay un proceso de flotación abierto. Reinicie la app para crear uno automáticamente.");
+                    return;
+                }
+
+                // 2) Correlativo DENTRO del proceso (reinicia con cada nuevo proceso).
+                var ult = await db.Lotes
+                    .Where(l => l.ProcesoFlotacionId == procesoActivo.Id)
+                    .MaxAsync(l => (int?)l.NumeroLote) ?? 0;
+
                 var lote = new Lote
                 {
-                    NumeroLote = ult + 1, FechaRegistro = FormFechaIngreso, ProveedorId = provId, MinaId = FormMina.Id,
+                    NumeroLote = ult + 1,
+                    ProcesoFlotacionId = procesoActivo.Id,
+                    FechaRegistro = FormFechaIngreso, ProveedorId = provId, MinaId = FormMina.Id,
                     TipoMineral = tipo, PesoBruto = FormPesoBruto, Tara = FormTara, PesoNeto = FormPesoNeto,
                     NombreChofer = FormChofer.Trim().ToUpper(), CiChofer = FormCiChofer.Trim(),
                     Placa = FormPlaca.Trim().ToUpper(), Ticket = FormTicket.Trim(),
