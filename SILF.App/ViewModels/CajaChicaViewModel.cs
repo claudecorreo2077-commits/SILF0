@@ -28,6 +28,10 @@ public class ReciboItem
     public string? Cuenta { get; set; }
     public string TipoMovimiento { get; set; } = "Salida";
     public string? Observaciones { get; set; }
+
+    /// <summary>Texto visible del recibo: "INGRESO #001" o "SALIDA #001".</summary>
+    public string NumeroFormateado =>
+        $"{TipoMovimiento.ToUpperInvariant()} #{NumeroRecibo:D3}";
 }
 
 public class DiarioItem
@@ -62,34 +66,48 @@ public partial class CajaChicaViewModel : BaseViewModel
     // PERMISOS
     // ══════════════════════════════════════════
 
-    /// <summary>Admin puede editar y eliminar. Contador solo crear y ver.</summary>
     public bool PuedeEditarEliminar => _esAdmin;
 
-    /// <summary>Callback para navegar a la vista previa del recibo.</summary>
     public Func<int, Task>? NavegarARecibo { get; set; }
 
     // ══════════════════════════════════════════
-    // TAB CONTROL
+    // TAB CONTROL PRINCIPAL (Recibos / Diario / Arqueo)
     // ══════════════════════════════════════════
 
     [ObservableProperty] private int _tabSeleccionado;
 
+    /// <summary>Sub-tab dentro de "Recibos": 0 = INGRESOS, 1 = SALIDAS.</summary>
+    [ObservableProperty] private int _subTabRecibos;
+
+    partial void OnSubTabRecibosChanged(int value)
+    {
+        // Si está abierto el diálogo de "Nuevo recibo" cuando el usuario cambia
+        // de sub-tab, NO actualizamos (sería confuso). Solo afecta a próximas creaciones.
+    }
+
     // ══════════════════════════════════════════
-    // TAB 1: LISTA DE RECIBOS
+    // TAB 1: LISTAS DE RECIBOS (separadas)
     // ══════════════════════════════════════════
 
-    public ObservableCollection<ReciboItem> Recibos { get; } = new();
-    private ICollectionView? _vistaRecibos;
+    public ObservableCollection<ReciboItem> RecibosIngresos { get; } = new();
+    public ObservableCollection<ReciboItem> RecibosSalidas { get; } = new();
+    private ICollectionView? _vistaIngresos;
+    private ICollectionView? _vistaSalidas;
 
     [ObservableProperty] private string _textoBusqueda = "";
-    [ObservableProperty] private int _totalRecibos;
-    [ObservableProperty] private bool _sinResultados;
+    [ObservableProperty] private int _totalIngresos;
+    [ObservableProperty] private int _totalSalidas;
+    [ObservableProperty] private bool _sinResultadosIngresos;
+    [ObservableProperty] private bool _sinResultadosSalidas;
 
     partial void OnTextoBusquedaChanged(string value)
     {
-        _vistaRecibos?.Refresh();
-        TotalRecibos = _vistaRecibos?.Cast<object>().Count() ?? 0;
-        SinResultados = TotalRecibos == 0 && Recibos.Count > 0;
+        _vistaIngresos?.Refresh();
+        _vistaSalidas?.Refresh();
+        TotalIngresos = _vistaIngresos?.Cast<object>().Count() ?? 0;
+        TotalSalidas = _vistaSalidas?.Cast<object>().Count() ?? 0;
+        SinResultadosIngresos = TotalIngresos == 0 && RecibosIngresos.Count > 0;
+        SinResultadosSalidas = TotalSalidas == 0 && RecibosSalidas.Count > 0;
     }
 
     private bool FiltrarRecibo(object obj)
@@ -98,7 +116,6 @@ public partial class CajaChicaViewModel : BaseViewModel
         if (string.IsNullOrWhiteSpace(TextoBusqueda)) return true;
         var t = TextoBusqueda.Trim().ToUpperInvariant();
 
-        // Buscar por número de recibo
         if (int.TryParse(t, out int num))
             return r.NumeroRecibo == num;
 
@@ -116,7 +133,7 @@ public partial class CajaChicaViewModel : BaseViewModel
     [ObservableProperty] private DateTime _diarioDesde = new(DateTime.Now.Year, DateTime.Now.Month, 1);
     [ObservableProperty] private DateTime _diarioHasta = DateTime.Now;
     [ObservableProperty] private decimal _totalEntradas;
-    [ObservableProperty] private decimal _totalSalidas;
+    [ObservableProperty] private decimal _totalSalidasDiario;
     [ObservableProperty] private decimal _saldoFinal;
 
     // ══════════════════════════════════════════
@@ -141,6 +158,7 @@ public partial class CajaChicaViewModel : BaseViewModel
     [ObservableProperty] private string _dialogoTitulo = "Nuevo Recibo";
 
     [ObservableProperty] private int _formNumeroRecibo;
+    [ObservableProperty] private string _formNumeroFormateado = "";
     [ObservableProperty] private DateTime _formFecha = DateTime.Now;
     [ObservableProperty] private string _formBeneficiario = "";
     [ObservableProperty] private decimal _formMonto;
@@ -153,6 +171,7 @@ public partial class CajaChicaViewModel : BaseViewModel
     [ObservableProperty] private bool _tieneError;
 
     private int? _editandoId;
+    private string _tipoOriginalAlEditar = "";
 
     public List<string> CuentasDisponibles { get; }
     public List<string> TiposMovimiento { get; }
@@ -160,9 +179,43 @@ public partial class CajaChicaViewModel : BaseViewModel
 
     partial void OnFormMontoChanged(decimal value)
     {
-        FormMontoLetras = value > 0
-            ? NumeroALetras.Convertir(value)
-            : "";
+        FormMontoLetras = value > 0 ? NumeroALetras.Convertir(value) : "";
+    }
+
+    partial void OnFormTipoMovimientoChanged(string value)
+    {
+        // Si el usuario cambia el tipo durante la creación/edición, recalcular
+        // el número correlativo del nuevo talonario.
+        _ = ActualizarNumeroFormularioAsync();
+    }
+
+    private async Task ActualizarNumeroFormularioAsync()
+    {
+        try
+        {
+            using var scope = App.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+
+            if (_editandoId.HasValue && FormTipoMovimiento == _tipoOriginalAlEditar)
+            {
+                // Editando y NO cambió el tipo: mantener el número original
+                var existente = await db.RecibosCaja.FindAsync(_editandoId.Value);
+                if (existente != null)
+                {
+                    FormNumeroRecibo = existente.NumeroRecibo;
+                    FormNumeroFormateado = $"{existente.TipoMovimiento.ToUpperInvariant()} #{existente.NumeroRecibo:D3}";
+                }
+                return;
+            }
+
+            // Creando, o editando con cambio de tipo: tomar próximo correlativo del tipo actual
+            var max = await db.RecibosCaja
+                .Where(r => r.TipoMovimiento == FormTipoMovimiento)
+                .MaxAsync(r => (int?)r.NumeroRecibo) ?? 0;
+            FormNumeroRecibo = max + 1;
+            FormNumeroFormateado = $"{FormTipoMovimiento.ToUpperInvariant()} #{FormNumeroRecibo:D3}";
+        }
+        catch { /* silencioso para el bind */ }
     }
 
     // ══════════════════════════════════════════
@@ -186,16 +239,17 @@ public partial class CajaChicaViewModel : BaseViewModel
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
 
-            // Cargar recibos
+            // Cargar recibos separados por tipo
             var recibos = await db.RecibosCaja
                 .Where(r => r.Visible)
                 .OrderByDescending(r => r.NumeroRecibo)
                 .ToListAsync();
 
-            Recibos.Clear();
+            RecibosIngresos.Clear();
+            RecibosSalidas.Clear();
             foreach (var r in recibos)
             {
-                Recibos.Add(new ReciboItem
+                var item = new ReciboItem
                 {
                     Id = r.Id,
                     NumeroRecibo = r.NumeroRecibo,
@@ -206,13 +260,20 @@ public partial class CajaChicaViewModel : BaseViewModel
                     Cuenta = r.Cuenta,
                     TipoMovimiento = r.TipoMovimiento,
                     Observaciones = r.Observaciones
-                });
+                };
+                if (r.TipoMovimiento == "Entrada") RecibosIngresos.Add(item);
+                else RecibosSalidas.Add(item);
             }
 
-            _vistaRecibos = CollectionViewSource.GetDefaultView(Recibos);
-            _vistaRecibos.Filter = FiltrarRecibo;
-            TotalRecibos = Recibos.Count;
-            SinResultados = false;
+            _vistaIngresos = CollectionViewSource.GetDefaultView(RecibosIngresos);
+            _vistaIngresos.Filter = FiltrarRecibo;
+            _vistaSalidas = CollectionViewSource.GetDefaultView(RecibosSalidas);
+            _vistaSalidas.Filter = FiltrarRecibo;
+
+            TotalIngresos = RecibosIngresos.Count;
+            TotalSalidas = RecibosSalidas.Count;
+            SinResultadosIngresos = false;
+            SinResultadosSalidas = false;
 
             // Cargar beneficiarios únicos para autocompletar
             var beneficiarios = await db.RecibosCaja
@@ -246,10 +307,7 @@ public partial class CajaChicaViewModel : BaseViewModel
         SilfDbContext db;
         IServiceScope? scope = null;
 
-        if (dbExterno != null)
-        {
-            db = dbExterno;
-        }
+        if (dbExterno != null) db = dbExterno;
         else
         {
             scope = App.Services.CreateScope();
@@ -264,7 +322,6 @@ public partial class CajaChicaViewModel : BaseViewModel
                 .ThenBy(r => r.NumeroRecibo)
                 .ToListAsync();
 
-            // Calcular saldo anterior (todos los recibos antes de DiarioDesde)
             var recibosAnteriores = await db.RecibosCaja
                 .Where(r => r.Visible && r.Fecha < DiarioDesde)
                 .ToListAsync();
@@ -272,15 +329,12 @@ public partial class CajaChicaViewModel : BaseViewModel
             decimal saldoAnterior = 0;
             foreach (var ra in recibosAnteriores)
             {
-                if (ra.TipoMovimiento == "Entrada")
-                    saldoAnterior += ra.Monto;
-                else
-                    saldoAnterior -= ra.Monto;
+                if (ra.TipoMovimiento == "Entrada") saldoAnterior += ra.Monto;
+                else saldoAnterior -= ra.Monto;
             }
 
             MovimientosDiario.Clear();
 
-            // Fila de saldo anterior si hay
             if (saldoAnterior != 0 || recibosAnteriores.Count > 0)
             {
                 MovimientosDiario.Add(new DiarioItem
@@ -310,7 +364,7 @@ public partial class CajaChicaViewModel : BaseViewModel
                 MovimientosDiario.Add(new DiarioItem
                 {
                     Fecha = r.Fecha,
-                    Detalle = $"Recibo Nº {r.NumeroRecibo} - {r.Beneficiario}",
+                    Detalle = $"{r.TipoMovimiento.ToUpperInvariant()} #{r.NumeroRecibo:D3} - {r.Beneficiario}",
                     Entrada = entrada,
                     Salida = salida,
                     Saldo = saldo,
@@ -321,7 +375,7 @@ public partial class CajaChicaViewModel : BaseViewModel
             }
 
             TotalEntradas = totalEntradas;
-            TotalSalidas = totalSalidas;
+            TotalSalidasDiario = totalSalidas;
             SaldoFinal = saldo;
         }
         finally
@@ -339,25 +393,24 @@ public partial class CajaChicaViewModel : BaseViewModel
     }
 
     // ── Nuevo Recibo ──
+    // Pre-selecciona el tipo según el sub-tab activo (0=Entrada, 1=Salida).
 
     [RelayCommand]
     private async Task NuevoReciboAsync()
     {
         _editandoId = null;
+        _tipoOriginalAlEditar = "";
         DialogoTitulo = "Nuevo Recibo";
 
-        using var scope = App.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
-        var maxNum = await db.RecibosCaja.MaxAsync(r => (int?)r.NumeroRecibo) ?? 0;
+        FormTipoMovimiento = SubTabRecibos == 0 ? "Entrada" : "Salida";
+        await ActualizarNumeroFormularioAsync();
 
-        FormNumeroRecibo = maxNum + 1;
         FormFecha = DateTime.Now;
         FormBeneficiario = "";
         FormMonto = 0;
         FormMontoLetras = "";
         FormConcepto = "";
         FormCuenta = "";
-        FormTipoMovimiento = "Salida";
         FormObservaciones = "";
         MensajeError = "";
         TieneError = false;
@@ -379,8 +432,10 @@ public partial class CajaChicaViewModel : BaseViewModel
             if (recibo == null) return;
 
             _editandoId = recibo.Id;
-            DialogoTitulo = $"Editar Recibo Nº {recibo.NumeroRecibo}";
+            _tipoOriginalAlEditar = recibo.TipoMovimiento;
+            DialogoTitulo = $"Editar {recibo.TipoMovimiento.ToUpperInvariant()} #{recibo.NumeroRecibo:D3}";
             FormNumeroRecibo = recibo.NumeroRecibo;
+            FormNumeroFormateado = $"{recibo.TipoMovimiento.ToUpperInvariant()} #{recibo.NumeroRecibo:D3}";
             FormFecha = recibo.Fecha;
             FormBeneficiario = recibo.Beneficiario;
             FormMonto = recibo.Monto;
@@ -405,22 +460,12 @@ public partial class CajaChicaViewModel : BaseViewModel
     [RelayCommand]
     private async Task GuardarReciboAsync()
     {
-        // Validaciones
         if (string.IsNullOrWhiteSpace(FormBeneficiario))
-        {
-            MensajeError = "Ingrese el beneficiario";
-            TieneError = true; return;
-        }
+        { MensajeError = "Ingrese el beneficiario"; TieneError = true; return; }
         if (FormMonto <= 0)
-        {
-            MensajeError = "El monto debe ser mayor a cero";
-            TieneError = true; return;
-        }
+        { MensajeError = "El monto debe ser mayor a cero"; TieneError = true; return; }
         if (string.IsNullOrWhiteSpace(FormConcepto))
-        {
-            MensajeError = "Ingrese el concepto";
-            TieneError = true; return;
-        }
+        { MensajeError = "Ingrese el concepto"; TieneError = true; return; }
 
         try
         {
@@ -432,11 +477,23 @@ public partial class CajaChicaViewModel : BaseViewModel
             {
                 recibo = await db.RecibosCaja.FindAsync(_editandoId.Value)
                     ?? throw new Exception("Recibo no encontrado");
+
+                // Si el tipo cambió, reasignar el número (próximo del nuevo talonario)
+                if (FormTipoMovimiento != _tipoOriginalAlEditar)
+                {
+                    var max = await db.RecibosCaja
+                        .Where(r => r.TipoMovimiento == FormTipoMovimiento && r.Id != recibo.Id)
+                        .MaxAsync(r => (int?)r.NumeroRecibo) ?? 0;
+                    recibo.NumeroRecibo = max + 1;
+                }
             }
             else
             {
-                recibo = new ReciboCaja();
-                recibo.NumeroRecibo = FormNumeroRecibo;
+                // Recalcular el número justo antes de insertar (evita race conditions)
+                var max = await db.RecibosCaja
+                    .Where(r => r.TipoMovimiento == FormTipoMovimiento)
+                    .MaxAsync(r => (int?)r.NumeroRecibo) ?? 0;
+                recibo = new ReciboCaja { NumeroRecibo = max + 1 };
                 db.RecibosCaja.Add(recibo);
             }
 
@@ -455,7 +512,7 @@ public partial class CajaChicaViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            MensajeError = $"Error al guardar: {ex.Message}";
+            MensajeError = $"Error al guardar: {ex.InnerException?.Message ?? ex.Message}";
             TieneError = true;
         }
     }
@@ -466,11 +523,11 @@ public partial class CajaChicaViewModel : BaseViewModel
     private void PedirEliminarRecibo(int reciboId)
     {
         if (!_esAdmin) return;
-        var recibo = Recibos.FirstOrDefault(r => r.Id == reciboId);
+        var recibo = RecibosIngresos.Concat(RecibosSalidas).FirstOrDefault(r => r.Id == reciboId);
         if (recibo == null) return;
 
         _eliminarId = reciboId;
-        MensajeConfirmacion = $"¿Desea eliminar el Recibo Nº {recibo.NumeroRecibo}?\n" +
+        MensajeConfirmacion = $"¿Desea eliminar el recibo {recibo.NumeroFormateado}?\n" +
                               $"Beneficiario: {recibo.Beneficiario}\n" +
                               $"Monto: {recibo.Monto:N2} Bs";
         ConfirmarEliminarAbierto = true;
@@ -516,9 +573,10 @@ public partial class CajaChicaViewModel : BaseViewModel
     {
         DialogoAbierto = false;
         _editandoId = null;
+        _tipoOriginalAlEditar = "";
     }
 
-    // ── Imprimir Recibo (navega a vista previa) ──
+    // ── Imprimir Recibo ──
 
     [RelayCommand]
     private async Task ImprimirReciboAsync(int reciboId)
@@ -560,13 +618,6 @@ public partial class CajaChicaViewModel : BaseViewModel
         }
     }
 
-    // ══════════════════════════════════════════
-    // DATOS PARA IMPRESIÓN DE RECIBO
-    // ══════════════════════════════════════════
-
-    /// <summary>
-    /// Devuelve los datos de un recibo para imprimir/generar PDF.
-    /// </summary>
     public async Task<ReciboCaja?> ObtenerReciboParaImprimirAsync(int reciboId)
     {
         using var scope = App.Services.CreateScope();

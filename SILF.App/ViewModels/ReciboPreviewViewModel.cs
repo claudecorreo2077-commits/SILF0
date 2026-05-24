@@ -20,6 +20,13 @@ namespace SILF.App.ViewModels;
 public partial class ReciboPreviewViewModel : BaseViewModel
 {
     [ObservableProperty] private int _numeroRecibo;
+
+    /// <summary>
+    /// Texto visible del recibo: "INGRESO #001" o "SALIDA #001".
+    /// Se usa en el header de las dos copias y en el nombre del archivo PDF.
+    /// </summary>
+    [ObservableProperty] private string _numeroReciboFormateado = "";
+
     [ObservableProperty] private decimal _monto;
     [ObservableProperty] private string _montoFormateado = "";
     [ObservableProperty] private string _beneficiario = "";
@@ -39,17 +46,15 @@ public partial class ReciboPreviewViewModel : BaseViewModel
     partial void OnEmpresaNitChanged(string value) => OnPropertyChanged(nameof(TieneNit));
     partial void OnEmpresaMunicipioChanged(string value) => OnPropertyChanged(nameof(TieneMunicipio));
 
-    // Firmas dinámicas según tipo de movimiento
+    // Firmas dinámicas
     [ObservableProperty] private string _firmaEntrego = "";
     [ObservableProperty] private string _firmaRecibio = "";
 
     // Etiqueta copia empresa con tipo
     [ObservableProperty] private string _etiquetaCopiaEmpresa = "COPIA EMPRESA";
 
-    // Label dinámico: "RECIBO DEL SR.(A):" para entrada, "PÁGUESE AL SR.(A):" para salida
     [ObservableProperty] private string _labelBeneficiario = "RECIBO DEL SR.(A):";
 
-    // QR
     [ObservableProperty] private BitmapImage? _qrImage;
 
     public Func<Task>? OnVolver { get; set; }
@@ -75,7 +80,6 @@ public partial class ReciboPreviewViewModel : BaseViewModel
                 return;
             }
 
-            // Empresa + logo
             _empresa = await db.Empresas.FirstOrDefaultAsync();
             if (_empresa != null)
             {
@@ -90,8 +94,8 @@ public partial class ReciboPreviewViewModel : BaseViewModel
                 }
             }
 
-            // Datos del recibo
             NumeroRecibo = _reciboActual.NumeroRecibo;
+            NumeroReciboFormateado = $"{_reciboActual.TipoMovimiento.ToUpperInvariant()} #{_reciboActual.NumeroRecibo:D3}";
             Monto = _reciboActual.Monto;
             MontoFormateado = _reciboActual.Monto.ToString("N2");
             Beneficiario = _reciboActual.Beneficiario;
@@ -100,16 +104,13 @@ public partial class ReciboPreviewViewModel : BaseViewModel
             Fecha = _reciboActual.Fecha;
             FechaTexto = FormatearFechaTexto(_reciboActual.Fecha);
 
-            // Firmas según tipo de movimiento:
-            //   Salida  → Empresa ENTREGA, Beneficiario RECIBE
-            //   Entrada → Beneficiario ENTREGA, Empresa RECIBE
             var liquidador = _empresa?.NombreLiquidador ?? "";
             if (_reciboActual.TipoMovimiento == "Entrada")
             {
                 FirmaEntrego = _reciboActual.Beneficiario;
                 FirmaRecibio = liquidador;
             }
-            else // Salida
+            else
             {
                 FirmaEntrego = liquidador;
                 FirmaRecibio = _reciboActual.Beneficiario;
@@ -117,11 +118,9 @@ public partial class ReciboPreviewViewModel : BaseViewModel
 
             EtiquetaCopiaEmpresa = $"COPIA EMPRESA - {_reciboActual.TipoMovimiento.ToUpperInvariant()}";
 
-            // Label dinámico según tipo
             LabelBeneficiario = _reciboActual.TipoMovimiento == "Salida"
                 ? "PÁGUESE AL SR.(A):" : "RECIBO DEL SR.(A):";
 
-            // QR
             var qrData = QrHelper.DatosRecibo(NumeroRecibo, Monto, Fecha,
                 Beneficiario, _reciboActual.TipoMovimiento, FirmaEntrego, FirmaRecibio, Concepto);
             var qrBytes = QrHelper.GenerarPng(qrData, 6);
@@ -146,7 +145,6 @@ public partial class ReciboPreviewViewModel : BaseViewModel
 
             var pd = new PrintDialog();
 
-            // Configurar tamaño carta (Letter: 8.5 x 11 pulgadas = 816 x 1056 DIP a 96dpi)
             if (pd.PrintTicket != null)
             {
                 pd.PrintTicket.PageMediaSize = new System.Printing.PageMediaSize(
@@ -156,15 +154,12 @@ public partial class ReciboPreviewViewModel : BaseViewModel
 
             if (pd.ShowDialog() == true)
             {
-                // Área imprimible
                 var areaW = pd.PrintableAreaWidth;
                 var areaH = pd.PrintableAreaHeight;
 
-                // Medir el contenido
                 printArea.Measure(new Size(areaW, areaH));
                 printArea.Arrange(new Rect(new Point(0, 0), printArea.DesiredSize));
 
-                // Escalar para que quepa en la página
                 double scaleX = areaW / printArea.ActualWidth;
                 double scaleY = areaH / printArea.ActualHeight;
                 double scale = Math.Min(scaleX, scaleY);
@@ -174,9 +169,8 @@ public partial class ReciboPreviewViewModel : BaseViewModel
                 printArea.Arrange(new Rect(new Point(0, 0),
                     new Size(printArea.DesiredSize.Width, printArea.DesiredSize.Height)));
 
-                pd.PrintVisual(printArea, $"Recibo Nº {NumeroRecibo}");
+                pd.PrintVisual(printArea, $"Recibo {NumeroReciboFormateado}");
 
-                // Restaurar escala original
                 printArea.LayoutTransform = Transform.Identity;
                 printArea.InvalidateMeasure();
 
@@ -197,10 +191,12 @@ public partial class ReciboPreviewViewModel : BaseViewModel
         if (_reciboActual == null) return;
         try
         {
+            // Nombre del archivo con prefijo del talonario
+            var prefijo = _reciboActual.TipoMovimiento.ToUpperInvariant();
             var dialog = new SaveFileDialog
             {
                 Filter = "PDF|*.pdf",
-                FileName = $"Recibo_{NumeroRecibo}.pdf",
+                FileName = $"{prefijo}_{_reciboActual.NumeroRecibo:D3}.pdf",
                 Title = "Exportar Recibo como PDF"
             };
             if (dialog.ShowDialog() == true)

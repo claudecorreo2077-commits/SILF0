@@ -22,6 +22,9 @@ public static class ReciboPdfGenerator
         var empresaMunicipio = empresa?.Municipio ?? "";
         var liquidador = empresa?.NombreLiquidador ?? "";
 
+        // Número visible con prefijo del talonario: "INGRESO #001" / "SALIDA #001"
+        var numeroVisible = $"{recibo.TipoMovimiento.ToUpperInvariant()} #{recibo.NumeroRecibo:D3}";
+
         // Roles según tipo de movimiento:
         //   Salida  → Empresa ENTREGA dinero, Beneficiario RECIBE
         //   Entrada → Beneficiario ENTREGA dinero, Empresa RECIBE
@@ -57,7 +60,7 @@ public static class ReciboPdfGenerator
 
                 page.Content().Column(col =>
                 {
-                    col.Item().Element(c => CopiaRecibo(c, recibo, montoLetras, fechaTexto,
+                    col.Item().Element(c => CopiaRecibo(c, recibo, numeroVisible, montoLetras, fechaTexto,
                         firmaEntrego, firmaRecibio, empresaNombre, empresaNit, empresaMunicipio,
                         logoBytes, qrBytes, "ORIGINAL"));
 
@@ -65,7 +68,7 @@ public static class ReciboPdfGenerator
                         .Text("- - - - - - - - - - - - - - - - - - - - - -  ✂  CORTAR AQUÍ  - - - - - - - - - - - - - - - - - - - - - -")
                         .FontSize(6).FontColor(Colors.Grey.Medium);
 
-                    col.Item().Element(c => CopiaRecibo(c, recibo, montoLetras, fechaTexto,
+                    col.Item().Element(c => CopiaRecibo(c, recibo, numeroVisible, montoLetras, fechaTexto,
                         firmaEntrego, firmaRecibio, empresaNombre, empresaNit, empresaMunicipio,
                         logoBytes, qrBytes, $"COPIA EMPRESA - {recibo.TipoMovimiento.ToUpperInvariant()}"));
                 });
@@ -74,6 +77,7 @@ public static class ReciboPdfGenerator
     }
 
     private static void CopiaRecibo(IContainer container, ReciboCaja recibo,
+        string numeroVisible,
         string montoLetras, string fechaTexto,
         string firmaEntrego, string firmaRecibio,
         string empresaNombre, string empresaNit, string empresaMunicipio,
@@ -111,7 +115,7 @@ public static class ReciboPdfGenerator
             {
                 row.RelativeItem().Column(c =>
                 {
-                    I(c, "RECIBO Nº:", recibo.NumeroRecibo.ToString());
+                    I(c, "RECIBO Nº:", numeroVisible);  // ← prefijo del talonario
                     I(c, "FECHA:", recibo.Fecha.ToString("dd/MM/yyyy"));
                     I(c, labelBenef, recibo.Beneficiario);
                 });

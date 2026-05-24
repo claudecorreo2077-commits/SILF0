@@ -115,7 +115,6 @@ public class SilfDbContext : DbContext
 
                 if (!columnasLotes.Contains("ProcesoFlotacionId"))
                 {
-                    // 1) Asegurar que exista al menos un Proceso #1 (donde mover los lotes existentes).
                     var cantProcesos = EscalarLong(conn, "SELECT COUNT(*) FROM ProcesosFlotacion;");
                     if (cantProcesos == 0)
                     {
@@ -127,19 +126,13 @@ public class SilfDbContext : DbContext
                     var procesoInicialId = EscalarLong(conn,
                         "SELECT Id FROM ProcesosFlotacion ORDER BY NumeroProceso ASC LIMIT 1;");
 
-                    // 2) Agregar la columna con default temporal para no violar NOT NULL
                     EjecutarSql(conn,
                         $"ALTER TABLE Lotes ADD COLUMN ProcesoFlotacionId INTEGER NOT NULL DEFAULT {procesoInicialId};");
 
-                    // 3) Crear índice
                     EjecutarSql(conn, "CREATE INDEX IF NOT EXISTS IX_Lotes_ProcesoFlotacionId ON Lotes (ProcesoFlotacionId);");
                 }
 
-                // ════════════════════════════════════════
-                // Asegurar que SIEMPRE haya un proceso abierto al arrancar la app.
-                // Si no hay ninguno abierto, abrir uno nuevo con NumeroProceso = MAX + 1.
-                // (Caso: BD recién creada por EnsureCreated y todavía sin procesos.)
-                // ════════════════════════════════════════
+                // Asegurar siempre un proceso abierto
                 var hayAbierto = EscalarLong(conn,
                     "SELECT COUNT(*) FROM ProcesosFlotacion WHERE Estado = 0;");
                 if (hayAbierto == 0)
@@ -152,6 +145,35 @@ public class SilfDbContext : DbContext
                         $"VALUES ({maxNum + 1}, '{ahora}', NULL, 0, NULL);");
                 }
 
+                // ════════════════════════════════════════
+                // RecibosCaja: dos talonarios independientes
+                // (TipoMovimiento, NumeroRecibo) único en vez de NumeroRecibo único.
+                // Si encontramos el índice viejo, lo borramos, renumeramos los recibos
+                // existentes dentro de cada tipo y creamos el índice nuevo.
+                // ════════════════════════════════════════
+                if (ExisteTabla(conn, "RecibosCaja"))
+                {
+                    var tieneIndiceViejo = ExisteIndice(conn, "IX_RecibosCaja_NumeroRecibo");
+                    var tieneIndiceNuevo = ExisteIndice(conn, "IX_RecibosCaja_TipoMovimiento_NumeroRecibo");
+
+                    if (!tieneIndiceNuevo)
+                    {
+                        // Borrar índice viejo si está
+                        if (tieneIndiceViejo)
+                            EjecutarSql(conn, "DROP INDEX IX_RecibosCaja_NumeroRecibo;");
+
+                        // Renumerar recibos existentes: ordenados por (Fecha, Id) dentro de
+                        // cada TipoMovimiento, asignar correlativo desde 1.
+                        // Si no hay recibos, este bloque no hace nada.
+                        RenumerarRecibosPorTipo(conn);
+
+                        // Crear índice nuevo compuesto único
+                        EjecutarSql(conn,
+                            "CREATE UNIQUE INDEX IX_RecibosCaja_TipoMovimiento_NumeroRecibo " +
+                            "ON RecibosCaja (TipoMovimiento, NumeroRecibo);");
+                    }
+                }
+
                 _esquemaVerificado = true;
             }
             catch (Exception)
@@ -159,6 +181,61 @@ public class SilfDbContext : DbContext
                 _esquemaVerificado = true;
                 throw;
             }
+        }
+    }
+
+    /// <summary>
+    /// Renumera los recibos existentes: ordenados por (Fecha asc, Id asc) DENTRO
+    /// de cada TipoMovimiento, asigna NumeroRecibo = 1, 2, 3... empezando desde 1
+    /// para cada tipo. Conserva el orden cronológico.
+    /// </summary>
+    private static void RenumerarRecibosPorTipo(SqliteConnection conn)
+    {
+        // Recoger los ids agrupados por tipo, en orden cronológico
+        var porTipo = new Dictionary<string, List<long>>();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT Id, TipoMovimiento FROM RecibosCaja ORDER BY Fecha ASC, Id ASC;";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var id = reader.GetInt64(0);
+                var tipo = reader.IsDBNull(1) ? "Salida" : reader.GetString(1);
+                if (!porTipo.ContainsKey(tipo)) porTipo[tipo] = new List<long>();
+                porTipo[tipo].Add(id);
+            }
+        }
+
+        if (porTipo.Count == 0) return; // no hay recibos, nada que renumerar
+
+        // Fase 1: poner números temporales NEGATIVOS para evitar colisiones con el índice
+        // (los temporales son únicos globalmente porque usan el Id).
+        using (var tx = conn.BeginTransaction())
+        {
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = "UPDATE RecibosCaja SET NumeroRecibo = -Id;";
+                cmd.ExecuteNonQuery();
+            }
+
+            // Fase 2: asignar los correlativos definitivos por tipo
+            foreach (var kvp in porTipo)
+            {
+                int correlativo = 1;
+                foreach (var id in kvp.Value)
+                {
+                    using var cmd = conn.CreateCommand();
+                    cmd.Transaction = tx;
+                    cmd.CommandText = "UPDATE RecibosCaja SET NumeroRecibo = $n WHERE Id = $id;";
+                    cmd.Parameters.AddWithValue("$n", correlativo);
+                    cmd.Parameters.AddWithValue("$id", id);
+                    cmd.ExecuteNonQuery();
+                    correlativo++;
+                }
+            }
+
+            tx.Commit();
         }
     }
 
@@ -180,6 +257,15 @@ public class SilfDbContext : DbContext
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=$nombre;";
         cmd.Parameters.AddWithValue("$nombre", tabla);
+        var res = cmd.ExecuteScalar();
+        return res != null && Convert.ToInt32(res) > 0;
+    }
+
+    private static bool ExisteIndice(SqliteConnection conn, string indice)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name=$nombre;";
+        cmd.Parameters.AddWithValue("$nombre", indice);
         var res = cmd.ExecuteScalar();
         return res != null && Convert.ToInt32(res) > 0;
     }
@@ -287,8 +373,10 @@ public class SilfDbContext : DbContext
             .HasIndex(u => u.NombreUsuario)
             .IsUnique();
 
+        // ── ReciboCaja: índice único COMPUESTO (TipoMovimiento + NumeroRecibo).
+        // Permite tener INGRESO #1, INGRESO #2 y SALIDA #1, SALIDA #2 sin colisión.
         modelBuilder.Entity<ReciboCaja>()
-            .HasIndex(r => r.NumeroRecibo)
+            .HasIndex(r => new { r.TipoMovimiento, r.NumeroRecibo })
             .IsUnique();
 
         // ══════════════════════════════════════════
@@ -322,9 +410,6 @@ public class SilfDbContext : DbContext
             new Mina { Id = 3, Nombre = "HUAYNA PORCO" }
         );
 
-        // Proceso de Flotación inicial #1 — para BDs nuevas creadas por EnsureCreated.
-        // Para BDs existentes con datos, la migración manual en AsegurarEsquemaActualizado
-        // se encarga de crearlo si no existe.
         modelBuilder.Entity<ProcesoFlotacion>().HasData(new ProcesoFlotacion
         {
             Id = 1,

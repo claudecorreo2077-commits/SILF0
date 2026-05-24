@@ -59,7 +59,7 @@
                 <Border Background="White" Width="700" Padding="36,28" BorderBrush="#CCC" BorderThickness="1">
                     <StackPanel>
 
-                        <!-- ═══ COPIA 1 — DEPOSITANTE ═══ -->
+                        <!-- ═══ COPIA 1 — ORIGINAL ═══ -->
                         <Border BorderBrush="#DDD" BorderThickness="1" Padding="20,16" CornerRadius="2">
                             <StackPanel>
                                 <Grid Margin="0,0,0,8">
@@ -90,8 +90,8 @@
                                 <StackPanel HorizontalAlignment="Right" Margin="0,0,0,12">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                         <TextBlock Text="RECIBO Nº  " FontWeight="Bold" FontSize="12"/>
-                                        <Border BorderBrush="Black" BorderThickness="0,0,0,1" MinWidth="50">
-                                            <TextBlock Text="{Binding NumeroRecibo}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center"/>
+                                        <Border BorderBrush="Black" BorderThickness="0,0,0,1" MinWidth="120">
+                                            <TextBlock Text="{Binding NumeroReciboFormateado}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center"/>
                                         </Border>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
@@ -129,7 +129,6 @@
                                     </Border>
                                     <TextBlock Grid.Column="1" Text="{Binding FechaTexto}" FontSize="10" FontWeight="SemiBold"/>
                                 </Grid>
-                                <!-- QR + Firmas dinámicas -->
                                 <Grid Margin="0,35,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
@@ -154,17 +153,12 @@
                         </Border>
 
                         <!-- ═══ LÍNEA DE CORTE ═══ -->
-                        <Grid Margin="0,24,0,24">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="✂" FontSize="16" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <Border Grid.Column="1" Height="1" VerticalAlignment="Center">
+                        <Grid Margin="0,8,0,8" Height="18">
+                            <Border Height="1" BorderBrush="#CCC" BorderThickness="0,0,0,1" VerticalAlignment="Center">
                                 <Border.Background>
-                                    <DrawingBrush Viewport="0,0,8,2" ViewportUnits="Absolute" TileMode="Tile">
+                                    <DrawingBrush TileMode="Tile" Viewport="0,0,8,1" ViewportUnits="Absolute" Stretch="None">
                                         <DrawingBrush.Drawing>
-                                            <GeometryDrawing Brush="Gray">
+                                            <GeometryDrawing Brush="#AAA">
                                                 <GeometryDrawing.Geometry>
                                                     <RectangleGeometry Rect="0,0,4,1"/>
                                                 </GeometryDrawing.Geometry>
@@ -206,8 +200,8 @@
                                 <StackPanel HorizontalAlignment="Right" Margin="0,0,0,12">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                                         <TextBlock Text="RECIBO Nº  " FontWeight="Bold" FontSize="12"/>
-                                        <Border BorderBrush="Black" BorderThickness="0,0,0,1" MinWidth="50">
-                                            <TextBlock Text="{Binding NumeroRecibo}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center"/>
+                                        <Border BorderBrush="Black" BorderThickness="0,0,0,1" MinWidth="120">
+                                            <TextBlock Text="{Binding NumeroReciboFormateado}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center"/>
                                         </Border>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
