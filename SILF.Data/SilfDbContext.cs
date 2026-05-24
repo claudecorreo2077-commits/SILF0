@@ -147,9 +147,6 @@ public class SilfDbContext : DbContext
 
                 // ════════════════════════════════════════
                 // RecibosCaja: dos talonarios independientes
-                // (TipoMovimiento, NumeroRecibo) único en vez de NumeroRecibo único.
-                // Si encontramos el índice viejo, lo borramos, renumeramos los recibos
-                // existentes dentro de cada tipo y creamos el índice nuevo.
                 // ════════════════════════════════════════
                 if (ExisteTabla(conn, "RecibosCaja"))
                 {
@@ -158,19 +155,61 @@ public class SilfDbContext : DbContext
 
                     if (!tieneIndiceNuevo)
                     {
-                        // Borrar índice viejo si está
                         if (tieneIndiceViejo)
                             EjecutarSql(conn, "DROP INDEX IX_RecibosCaja_NumeroRecibo;");
 
-                        // Renumerar recibos existentes: ordenados por (Fecha, Id) dentro de
-                        // cada TipoMovimiento, asignar correlativo desde 1.
-                        // Si no hay recibos, este bloque no hace nada.
                         RenumerarRecibosPorTipo(conn);
 
-                        // Crear índice nuevo compuesto único
                         EjecutarSql(conn,
                             "CREATE UNIQUE INDEX IX_RecibosCaja_TipoMovimiento_NumeroRecibo " +
                             "ON RecibosCaja (TipoMovimiento, NumeroRecibo);");
+                    }
+                }
+
+                // ════════════════════════════════════════
+                // ArqueosCaja: columnas de exportación/importación
+                // Identificador único + flags de exportado/importado.
+                // Para los arqueos ya existentes en la BD se generan Guids nuevos.
+                // ════════════════════════════════════════
+                if (ExisteTabla(conn, "ArqueosCaja"))
+                {
+                    var columnasArqueos = ListarColumnas(conn, "ArqueosCaja");
+
+                    // 1. IdentificadorUnico
+                    if (!columnasArqueos.Contains("IdentificadorUnico"))
+                    {
+                        // Paso 1: agregar la columna sin restricción (nullable por defecto)
+                        EjecutarSql(conn,
+                            "ALTER TABLE ArqueosCaja ADD COLUMN IdentificadorUnico TEXT NULL;");
+
+                        // Paso 2: poblar todos los arqueos existentes con Guids nuevos
+                        PoblarIdentificadoresArqueos(conn);
+
+                        // Paso 3: crear índice único (después del poblado, ya no hay nulos)
+                        EjecutarSql(conn,
+                            "CREATE UNIQUE INDEX IX_ArqueosCaja_IdentificadorUnico " +
+                            "ON ArqueosCaja (IdentificadorUnico);");
+                    }
+
+                    // 2. Exportado
+                    if (!columnasArqueos.Contains("Exportado"))
+                    {
+                        EjecutarSql(conn,
+                            "ALTER TABLE ArqueosCaja ADD COLUMN Exportado INTEGER NOT NULL DEFAULT 0;");
+                    }
+
+                    // 3. FechaExportacion
+                    if (!columnasArqueos.Contains("FechaExportacion"))
+                    {
+                        EjecutarSql(conn,
+                            "ALTER TABLE ArqueosCaja ADD COLUMN FechaExportacion TEXT NULL;");
+                    }
+
+                    // 4. OrigenImportacion
+                    if (!columnasArqueos.Contains("OrigenImportacion"))
+                    {
+                        EjecutarSql(conn,
+                            "ALTER TABLE ArqueosCaja ADD COLUMN OrigenImportacion TEXT NULL;");
                     }
                 }
 
@@ -185,13 +224,40 @@ public class SilfDbContext : DbContext
     }
 
     /// <summary>
+    /// Asigna un Guid único a cada arqueo que aún no lo tenga.
+    /// </summary>
+    private static void PoblarIdentificadoresArqueos(SqliteConnection conn)
+    {
+        var ids = new List<long>();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT Id FROM ArqueosCaja WHERE IdentificadorUnico IS NULL ORDER BY Id ASC;";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read()) ids.Add(reader.GetInt64(0));
+        }
+
+        if (ids.Count == 0) return;
+
+        using var tx = conn.BeginTransaction();
+        foreach (var id in ids)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE ArqueosCaja SET IdentificadorUnico = $g WHERE Id = $id;";
+            cmd.Parameters.AddWithValue("$g", Guid.NewGuid().ToString());
+            cmd.Parameters.AddWithValue("$id", id);
+            cmd.ExecuteNonQuery();
+        }
+        tx.Commit();
+    }
+
+    /// <summary>
     /// Renumera los recibos existentes: ordenados por (Fecha asc, Id asc) DENTRO
     /// de cada TipoMovimiento, asigna NumeroRecibo = 1, 2, 3... empezando desde 1
-    /// para cada tipo. Conserva el orden cronológico.
+    /// para cada tipo.
     /// </summary>
     private static void RenumerarRecibosPorTipo(SqliteConnection conn)
     {
-        // Recoger los ids agrupados por tipo, en orden cronológico
         var porTipo = new Dictionary<string, List<long>>();
         using (var cmd = conn.CreateCommand())
         {
@@ -206,10 +272,8 @@ public class SilfDbContext : DbContext
             }
         }
 
-        if (porTipo.Count == 0) return; // no hay recibos, nada que renumerar
+        if (porTipo.Count == 0) return;
 
-        // Fase 1: poner números temporales NEGATIVOS para evitar colisiones con el índice
-        // (los temporales son únicos globalmente porque usan el Id).
         using (var tx = conn.BeginTransaction())
         {
             using (var cmd = conn.CreateCommand())
@@ -219,7 +283,6 @@ public class SilfDbContext : DbContext
                 cmd.ExecuteNonQuery();
             }
 
-            // Fase 2: asignar los correlativos definitivos por tipo
             foreach (var kvp in porTipo)
             {
                 int correlativo = 1;
@@ -373,10 +436,14 @@ public class SilfDbContext : DbContext
             .HasIndex(u => u.NombreUsuario)
             .IsUnique();
 
-        // ── ReciboCaja: índice único COMPUESTO (TipoMovimiento + NumeroRecibo).
-        // Permite tener INGRESO #1, INGRESO #2 y SALIDA #1, SALIDA #2 sin colisión.
         modelBuilder.Entity<ReciboCaja>()
             .HasIndex(r => new { r.TipoMovimiento, r.NumeroRecibo })
+            .IsUnique();
+
+        // ── ArqueoCaja: IdentificadorUnico es la clave global del arqueo,
+        //    se usa para deduplicar al importar desde otra PC. ──
+        modelBuilder.Entity<ArqueoCaja>()
+            .HasIndex(a => a.IdentificadorUnico)
             .IsUnique();
 
         // ══════════════════════════════════════════

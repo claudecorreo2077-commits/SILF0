@@ -23,9 +23,13 @@ public partial class MainViewModel : BaseViewModel
     public string RolUsuario => _sesion.UsuarioActual?.Rol.ToString() ?? "";
     public bool EsAdmin => _sesion.EsAdmin;
     public string InicialUsuario => _sesion.UsuarioActual?.NombreCompleto?.Substring(0, 1).ToUpper() ?? "U";
+
+    // ── Visibilidades del sidebar por rol ──
+    // Admin ve todo. Contador ve únicamente Inicio + Caja Chica.
     public Visibility VisibilidadLiquidacion => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility VisibilidadFlotacion => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility VisibilidadConfig => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility VisibilidadFlotacion   => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility VisibilidadReportes    => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility VisibilidadConfig      => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
 
     [ObservableProperty] private object? _vistaActual;
     [ObservableProperty] private string _moduloSeleccionado = "Inicio";
@@ -37,6 +41,15 @@ public partial class MainViewModel : BaseViewModel
     [RelayCommand]
     public async Task NavegarAsync(string modulo)
     {
+        // ── Bloqueo defensivo: si el Contador intenta navegar a un módulo no
+        //    permitido (porque alguien forzó el binding o por código), lo
+        //    redirigimos a Inicio. Defensa en profundidad. ──
+        if (!_sesion.EsAdmin)
+        {
+            var permitidoContador = modulo is "Inicio" or "Caja Chica" or "Recibo";
+            if (!permitidoContador) modulo = "Inicio";
+        }
+
         SidebarActivo = modulo switch
         {
             "NuevoLote" or "EditarLote" => "Lotes",
@@ -167,7 +180,9 @@ public partial class MainViewModel : BaseViewModel
 
     private async Task<Views.CajaChicaView> CrearVistaCajaChicaAsync()
     {
-        var vm = new CajaChicaViewModel(_sesion.EsAdmin)
+        // Pasamos el nombre real del usuario para que el arqueo se guarde firmado
+        // por la persona que lo realizó (Admin o Contador), no como "Admin" hardcoded.
+        var vm = new CajaChicaViewModel(_sesion.EsAdmin, NombreUsuario)
         {
             NavegarARecibo = async (reciboId) => await NavegarAReciboPreviewAsync(reciboId)
         };

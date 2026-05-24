@@ -215,12 +215,14 @@
                                     <RadioButton.ToolTip><ToolTip Content="Inv. Flotación" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
                                     <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Flask" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Inv. Flotación" VerticalAlignment="Center"/></StackPanel>
                                 </RadioButton>
-                                <Border Height="1" Background="{DynamicResource MenuSeparator}" Margin="12,10"/>
+                                <!-- Separador del grupo Admin: solo visible si hay items Admin arriba -->
+                                <Border Height="1" Background="{DynamicResource MenuSeparator}" Margin="12,10" Visibility="{Binding VisibilidadLiquidacion}"/>
                                 <RadioButton Style="{StaticResource MenuButton}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Caja Chica, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Caja Chica">
                                     <RadioButton.ToolTip><ToolTip Content="Caja Chica" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
                                     <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="CashRegister" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Caja Chica" VerticalAlignment="Center"/></StackPanel>
                                 </RadioButton>
-                                <RadioButton Style="{StaticResource MenuButton}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Reportes, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Reportes">
+                                <!-- Reportes: oculto para Contador -->
+                                <RadioButton Style="{StaticResource MenuButton}" Visibility="{Binding VisibilidadReportes}" IsChecked="{Binding SidebarActivo, Converter={StaticResource StringMatch}, ConverterParameter=Reportes, Mode=OneWay}" Command="{Binding NavegarCommand}" CommandParameter="Reportes">
                                     <RadioButton.ToolTip><ToolTip Content="Reportes" Style="{StaticResource MenuExtension}"/></RadioButton.ToolTip>
                                     <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="ChartBar" Width="22" Height="22" Margin="0,0,14,0" VerticalAlignment="Center"/><TextBlock Text="Reportes" VerticalAlignment="Center"/></StackPanel>
                                 </RadioButton>

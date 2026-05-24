@@ -24,7 +24,6 @@
                     <TextBlock Text="{Binding DialogoTitulo}" FontSize="20" FontWeight="Bold"
                                Foreground="{DynamicResource MaterialDesign.Brush.Primary}" Margin="0,0,0,20"/>
 
-                    <!-- Fila 1: Nº Recibo (formateado) + Fecha -->
                     <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -41,15 +40,12 @@
                                     Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
                     </Grid>
 
-                    <!-- Fila 2: Tipo Movimiento -->
                     <ComboBox ItemsSource="{Binding TiposMovimiento}"
                               SelectedItem="{Binding FormTipoMovimiento}"
                               md:HintAssist.Hint="Tipo de Movimiento (cambiarlo reasigna el Nº)"
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                               Margin="0,0,0,12"/>
 
-                    <!-- Fila 3: Beneficiario — hint dinámico según tipo de movimiento -->
-                    <!-- Entrada → "Recibido del Sr.(a)"     Salida → "Páguese al Sr.(a)" -->
                     <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                               ItemsSource="{Binding BeneficiariosAnteriores}"
                               Text="{Binding FormBeneficiario, UpdateSourceTrigger=PropertyChanged}"
@@ -57,7 +53,6 @@
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                               Margin="0,0,0,12"/>
 
-                    <!-- Fila 4: Monto (NumericInput aplicado) -->
                     <TextBox Text="{Binding FormMonto, StringFormat=\{0:0.####\}, ConverterCulture=en-US, UpdateSourceTrigger=PropertyChanged}"
                              md:HintAssist.Hint="Valor (Bs)"
                              b:NumericInput.IsEnabled="True"
@@ -65,20 +60,17 @@
                              FontWeight="SemiBold" FontSize="15"
                              Margin="0,0,0,4"/>
 
-                    <!-- Cantidad en letras -->
                     <TextBlock Text="{Binding FormMontoLetras}" FontSize="11"
                                Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
                                TextWrapping="Wrap" Margin="4,0,0,12"
                                FontStyle="Italic"/>
 
-                    <!-- Fila 5: Concepto -->
                     <TextBox Text="{Binding FormConcepto, UpdateSourceTrigger=PropertyChanged}"
                              md:HintAssist.Hint="Por concepto de"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              AcceptsReturn="False" MaxLength="500"
                              Margin="0,0,0,12"/>
 
-                    <!-- Fila 6: Cuenta -->
                     <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                               ItemsSource="{Binding CuentasDisponibles}"
                               Text="{Binding FormCuenta, UpdateSourceTrigger=PropertyChanged}"
@@ -86,7 +78,6 @@
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                               Margin="0,0,0,12"/>
 
-                    <!-- Fila 7: Observaciones -->
                     <TextBox Text="{Binding FormObservaciones, UpdateSourceTrigger=PropertyChanged}"
                              md:HintAssist.Hint="Observaciones"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -94,12 +85,10 @@
                              MinHeight="60" MaxHeight="100"
                              Margin="0,0,0,12"/>
 
-                    <!-- Error -->
                     <TextBlock Text="{Binding MensajeError}" Foreground="Red"
                                FontSize="12" Margin="0,0,0,8"
                                Visibility="{Binding TieneError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                    <!-- Botones -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
                         <Button Content="CANCELAR" Command="{Binding CancelarDialogoCommand}"
                                 Style="{StaticResource MaterialDesignFlatButton}" Margin="0,0,12,0"/>
@@ -110,9 +99,6 @@
             </Border>
         </md:DialogHost.DialogContent>
 
-        <!-- ══════════════════════════════════════════ -->
-        <!-- DIÁLOGO: CONFIRMAR ELIMINAR               -->
-        <!-- ══════════════════════════════════════════ -->
         <md:DialogHost IsOpen="{Binding ConfirmarEliminarAbierto}" CloseOnClickAway="False"
                        OverlayBackground="{DynamicResource MaterialDesign.Brush.Background}">
             <md:DialogHost.DialogContent>
@@ -135,15 +121,12 @@
                 </Border>
             </md:DialogHost.DialogContent>
 
-            <!-- ══════════════════════════════════════════ -->
-            <!-- CONTENIDO PRINCIPAL                       -->
-            <!-- ══════════════════════════════════════════ -->
             <DockPanel>
                 <TabControl SelectedIndex="{Binding TabSeleccionado}"
                             md:ColorZoneAssist.Mode="PrimaryMid" TabStripPlacement="Top">
 
                     <!-- ════════════════════════════════════ -->
-                    <!-- TAB 1: RECIBOS (sub-tabs Ingresos/Salidas) -->
+                    <!-- TAB 1: RECIBOS                      -->
                     <!-- ════════════════════════════════════ -->
                     <TabItem>
                         <TabItem.Header>
@@ -373,6 +356,8 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="12"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
@@ -390,7 +375,19 @@
                                         Style="{StaticResource MaterialDesignRaisedButton}"
                                         md:ButtonAssist.CornerRadius="6" Padding="16,8"/>
 
-                                <StackPanel Grid.Column="6" Orientation="Horizontal">
+                                <!-- Botón GENERAR EXCEL -->
+                                <Button Grid.Column="6"
+                                        Command="{Binding ExportarLibroDiarioExcelCommand}"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        md:ButtonAssist.CornerRadius="6" Padding="16,8"
+                                        ToolTip="Generar archivo Excel del Libro Diario">
+                                    <StackPanel Orientation="Horizontal">
+                                        <md:PackIcon Kind="MicrosoftExcel" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="#1B5E20"/>
+                                        <TextBlock Text="GENERAR EXCEL"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <StackPanel Grid.Column="8" Orientation="Horizontal">
                                     <Border BorderBrush="{DynamicResource MaterialDesign.Brush.Primary}"
                                             BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,0,8,0">
                                         <StackPanel>
@@ -463,7 +460,7 @@
                     </TabItem>
 
                     <!-- ════════════════════════════════════ -->
-                    <!-- TAB 3: ARQUEO DE CAJA               -->
+                    <!-- TAB 3: ARQUEO DE CAJA + HISTORIAL    -->
                     <!-- ════════════════════════════════════ -->
                     <TabItem>
                         <TabItem.Header>
@@ -474,72 +471,229 @@
                         </TabItem.Header>
 
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-                            <md:Card md:ElevationAssist.Elevation="Dp2"
-                                     Width="500" HorizontalAlignment="Center"
-                                     VerticalAlignment="Top"
-                                     Padding="32,32,32,48" Margin="0,20,0,40"
-                                     UniformCornerRadius="12">
-                                <StackPanel>
-                                    <TextBlock Text="Arqueo de Caja Chica" FontSize="22" FontWeight="Bold"
-                                               Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
-                                               HorizontalAlignment="Center" Margin="0,0,0,28"/>
+                            <StackPanel>
+                                <!-- ═══ SECCIÓN 1: NUEVO ARQUEO ═══ -->
+                                <md:Card md:ElevationAssist.Elevation="Dp2"
+                                         Width="500" HorizontalAlignment="Center"
+                                         VerticalAlignment="Top"
+                                         Padding="32,32,32,48" Margin="0,20,0,20"
+                                         UniformCornerRadius="12">
+                                    <StackPanel>
+                                        <TextBlock Text="Nuevo Arqueo de Caja" FontSize="22" FontWeight="Bold"
+                                                   Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                                   HorizontalAlignment="Center" Margin="0,0,0,28"/>
 
-                                    <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
-                                            CornerRadius="8" Padding="16" Margin="0,0,0,16">
-                                        <Grid>
+                                        <Border Background="{DynamicResource MaterialDesign.Brush.Card.Background}"
+                                                CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="SALDO EN CAJA (contable)" FontSize="12"
+                                                               Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"/>
+                                                    <TextBlock Text="Calculado según registros del libro diario"
+                                                               FontSize="10" Foreground="Gray"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" FontSize="24" FontWeight="Bold"
+                                                           Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                                           VerticalAlignment="Center"
+                                                           Text="{Binding ArqueoCaja, StringFormat={}{0:N2} Bs}"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <TextBox Text="{Binding ArqueoFisico, StringFormat=\{0:0.####\}, ConverterCulture=en-US, UpdateSourceTrigger=PropertyChanged}"
+                                                 md:HintAssist.Hint="Saldo Físico (conteo manual)"
+                                                 b:NumericInput.IsEnabled="True"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 FontSize="18" HorizontalContentAlignment="Right"
+                                                 Margin="0,0,0,16"/>
+
+                                        <Border CornerRadius="8" Padding="16" Margin="0,0,0,24"
+                                                Background="{DynamicResource MaterialDesign.Brush.Card.Background}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="DIFERENCIA" FontSize="14" FontWeight="Bold"
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding ArqueoDiferencia, StringFormat=N2}"
+                                                           FontSize="24" FontWeight="Bold" VerticalAlignment="Center"
+                                                           x:Name="txtDiferencia"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <TextBox Text="{Binding ArqueoObservaciones, UpdateSourceTrigger=PropertyChanged}"
+                                                 md:HintAssist.Hint="Observaciones del arqueo"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 AcceptsReturn="True" TextWrapping="Wrap"
+                                                 MinHeight="80" Margin="0,0,0,20"/>
+
+                                        <Button Content="GUARDAR ARQUEO"
+                                                Command="{Binding GuardarArqueoCommand}"
+                                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                                md:ButtonAssist.CornerRadius="6"
+                                                HorizontalAlignment="Stretch" Height="44"
+                                                FontWeight="Bold" Margin="0,0,0,8"/>
+                                    </StackPanel>
+                                </md:Card>
+
+                                <!-- ═══ SECCIÓN 2: HISTORIAL DE ARQUEOS ═══ -->
+                                <Border BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.HoverBackground}"
+                                        BorderThickness="0,1,0,0" Margin="0,30,0,0" Padding="0,30,0,20">
+                                    <StackPanel>
+                                        <TextBlock Text="HISTORIAL DE ARQUEOS"
+                                                   FontSize="18" FontWeight="Bold"
+                                                   Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                                                   Margin="0,0,0,8"/>
+                                        <TextBlock Text="Consulte arqueos anteriores y exporte para enviarlos al Administrador."
+                                                   FontSize="12" Foreground="Gray" Margin="0,0,0,16"/>
+
+                                        <!-- Filtros + botones -->
+                                        <Grid Margin="0,0,0,16">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <TextBlock Text="SALDO EN CAJA (contable)" FontSize="12"
-                                                           Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"/>
-                                                <TextBlock Text="Calculado según registros del libro diario"
-                                                           FontSize="10" Foreground="Gray"/>
-                                            </StackPanel>
-                                            <TextBlock Grid.Column="1" FontSize="24" FontWeight="Bold"
-                                                       Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
-                                                       VerticalAlignment="Center"
-                                                       Text="{Binding ArqueoCaja, StringFormat={}{0:N2} Bs}"/>
-                                        </Grid>
-                                    </Border>
-
-                                    <TextBox Text="{Binding ArqueoFisico, StringFormat=\{0:0.####\}, ConverterCulture=en-US, UpdateSourceTrigger=PropertyChanged}"
-                                             md:HintAssist.Hint="Saldo Físico (conteo manual)"
-                                             b:NumericInput.IsEnabled="True"
-                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                             FontSize="18" HorizontalContentAlignment="Right"
-                                             Margin="0,0,0,16"/>
-
-                                    <Border CornerRadius="8" Padding="16" Margin="0,0,0,24"
-                                            Background="{DynamicResource MaterialDesign.Brush.Card.Background}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="DIFERENCIA" FontSize="14" FontWeight="Bold"
-                                                       VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding ArqueoDiferencia, StringFormat=N2}"
-                                                       FontSize="24" FontWeight="Bold" VerticalAlignment="Center"
-                                                       x:Name="txtDiferencia"/>
+
+                                            <DatePicker Grid.Column="0" SelectedDate="{Binding HistorialDesde}"
+                                                        md:HintAssist.Hint="Desde"
+                                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                                        Width="160"/>
+                                            <DatePicker Grid.Column="2" SelectedDate="{Binding HistorialHasta}"
+                                                        md:HintAssist.Hint="Hasta"
+                                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                                        Width="160"/>
+                                            <Button Grid.Column="4" Content="FILTRAR"
+                                                    Command="{Binding FiltrarHistorialArqueosCommand}"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                    md:ButtonAssist.CornerRadius="6" Padding="16,8"/>
+
+                                            <!-- Botón EXPORTAR (todos los usuarios) -->
+                                            <Button Grid.Column="6"
+                                                    Command="{Binding ExportarArqueosCommand}"
+                                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                    md:ButtonAssist.CornerRadius="6" Padding="14,8" Margin="0,0,8,0"
+                                                    ToolTip="Exporta arqueos pendientes a un archivo .silf-arqueo">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <md:PackIcon Kind="Upload" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="#1565C0"/>
+                                                    <TextBlock Text="EXPORTAR"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <!-- Botón IMPORTAR (solo Admin) -->
+                                            <Button Grid.Column="7"
+                                                    Command="{Binding ImportarArqueosCommand}"
+                                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                    md:ButtonAssist.CornerRadius="6" Padding="14,8"
+                                                    Visibility="{Binding PuedeImportar, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    ToolTip="Importa un archivo .silf-arqueo del Contador">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <md:PackIcon Kind="Download" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="#2E7D32"/>
+                                                    <TextBlock Text="IMPORTAR"/>
+                                                </StackPanel>
+                                            </Button>
                                         </Grid>
-                                    </Border>
 
-                                    <TextBox Text="{Binding ArqueoObservaciones, UpdateSourceTrigger=PropertyChanged}"
-                                             md:HintAssist.Hint="Observaciones del arqueo"
-                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                             AcceptsReturn="True" TextWrapping="Wrap"
-                                             MinHeight="80" Margin="0,0,0,20"/>
+                                        <!-- Resumen de estados -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                            <Border Background="#F5F5F5" CornerRadius="14" Padding="12,4" Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#757575" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock FontSize="11">
+                                                        <Run Text="Pendientes:"/>
+                                                        <Run Text="{Binding TotalHistorialPendientes, Mode=OneWay}" FontWeight="Bold"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Background="#E3F2FD" CornerRadius="14" Padding="12,4" Margin="0,0,8,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#1565C0" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock FontSize="11">
+                                                        <Run Text="Exportados:"/>
+                                                        <Run Text="{Binding TotalHistorialExportados, Mode=OneWay}" FontWeight="Bold" Foreground="#1565C0"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Background="#E8F5E9" CornerRadius="14" Padding="12,4">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="#2E7D32" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock FontSize="11">
+                                                        <Run Text="Importados:"/>
+                                                        <Run Text="{Binding TotalHistorialImportados, Mode=OneWay}" FontWeight="Bold" Foreground="#2E7D32"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
 
-                                    <Button Content="GUARDAR ARQUEO"
-                                            Command="{Binding GuardarArqueoCommand}"
-                                            Style="{StaticResource MaterialDesignRaisedButton}"
-                                            md:ButtonAssist.CornerRadius="6"
-                                            HorizontalAlignment="Stretch" Height="44"
-                                            FontWeight="Bold" Margin="0,0,0,8"/>
-                                </StackPanel>
-                            </md:Card>
+                                        <!-- Grid del historial -->
+                                        <Grid MinHeight="220">
+                                            <DataGrid ItemsSource="{Binding HistorialArqueos}" IsReadOnly="True"
+                                                      AutoGenerateColumns="False" CanUserAddRows="False"
+                                                      Style="{StaticResource MaterialDesignDataGrid}"
+                                                      md:DataGridAssist.CornerRadius="8"
+                                                      HeadersVisibility="Column" RowHeight="36">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Fecha" Binding="{Binding Fecha, StringFormat=dd/MM/yyyy HH:mm}" Width="140"/>
+                                                    <DataGridTextColumn Header="Contable (Bs)" Binding="{Binding SaldoContable, StringFormat=N2}" Width="110">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Físico (Bs)" Binding="{Binding SaldoFisico, StringFormat=N2}" Width="110">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Diferencia" Binding="{Binding Diferencia, StringFormat=N2}" Width="100">
+                                                        <DataGridTextColumn.ElementStyle>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            </Style>
+                                                        </DataGridTextColumn.ElementStyle>
+                                                    </DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Realizado por" Binding="{Binding RealizadoPor}" Width="*"/>
+                                                    <DataGridTemplateColumn Header="Estado" Width="120" CanUserSort="False">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <Border CornerRadius="10" Padding="8,3"
+                                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                    <Border.Background>
+                                                                        <SolidColorBrush Color="{Binding EstadoColor}"/>
+                                                                    </Border.Background>
+                                                                    <TextBlock Text="{Binding EstadoTexto}"
+                                                                               FontSize="10" FontWeight="Bold"
+                                                                               Foreground="White"/>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                    </DataGridTemplateColumn>
+                                                    <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" Width="200"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+
+                                            <TextBlock Text="No hay arqueos en el rango seleccionado."
+                                                       FontSize="13" Foreground="Gray"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Visibility="{Binding HistorialSinResultados, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                       IsHitTestVisible="False"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
                         </ScrollViewer>
                     </TabItem>
                 </TabControl>

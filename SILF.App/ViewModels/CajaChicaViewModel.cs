@@ -1,15 +1,18 @@
 // Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\CajaChicaViewModel.cs
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Win32;
 using SILF.Core.Helpers;
 using SILF.Core.Models;
 using SILF.Data;
+using SILF.Reports;
 
 namespace SILF.App.ViewModels;
 
@@ -28,8 +31,6 @@ public class ReciboItem
     public string? Cuenta { get; set; }
     public string TipoMovimiento { get; set; } = "Salida";
     public string? Observaciones { get; set; }
-
-    /// <summary>Texto visible del recibo: "INGRESO #001" o "SALIDA #001".</summary>
     public string NumeroFormateado =>
         $"{TipoMovimiento.ToUpperInvariant()} #{NumeroRecibo:D3}";
 }
@@ -46,13 +47,45 @@ public class DiarioItem
     public int? NumeroRecibo { get; set; }
 }
 
+/// <summary>
+/// Item del historial de arqueos para mostrar en el DataGrid.
+/// </summary>
+public class ArqueoHistorialItem
+{
+    public int Id { get; set; }
+    public string IdentificadorUnico { get; set; } = "";
+    public DateTime Fecha { get; set; }
+    public decimal SaldoContable { get; set; }
+    public decimal SaldoFisico { get; set; }
+    public decimal Diferencia { get; set; }
+    public string? Observaciones { get; set; }
+    public string? RealizadoPor { get; set; }
+    public bool Exportado { get; set; }
+    public DateTime? FechaExportacion { get; set; }
+    public string? OrigenImportacion { get; set; }
+
+    public bool EsImportado => !string.IsNullOrWhiteSpace(OrigenImportacion);
+
+    /// <summary>"Pendiente", "Exportado", "Importado"</summary>
+    public string EstadoTexto => EsImportado ? "Importado"
+        : Exportado ? "Exportado"
+        : "Pendiente";
+
+    /// <summary>Color hex para el chip del estado.</summary>
+    public string EstadoColor => EsImportado ? "#2E7D32"     // verde
+        : Exportado ? "#1565C0"                              // azul
+        : "#757575";                                         // gris
+}
+
 public partial class CajaChicaViewModel : BaseViewModel
 {
     private readonly bool _esAdmin;
+    private readonly string _nombreUsuario;
 
-    public CajaChicaViewModel(bool esAdmin)
+    public CajaChicaViewModel(bool esAdmin, string nombreUsuario)
     {
         _esAdmin = esAdmin;
+        _nombreUsuario = string.IsNullOrWhiteSpace(nombreUsuario) ? "Usuario" : nombreUsuario;
         Titulo = "Caja Chica";
         CuentasDisponibles = new()
         {
@@ -68,21 +101,21 @@ public partial class CajaChicaViewModel : BaseViewModel
 
     public bool PuedeEditarEliminar => _esAdmin;
 
+    /// <summary>Solo Admin puede importar arqueos desde otra PC.</summary>
+    public bool PuedeImportar => _esAdmin;
+
     public Func<int, Task>? NavegarARecibo { get; set; }
 
     // ══════════════════════════════════════════
-    // TAB CONTROL PRINCIPAL (Recibos / Diario / Arqueo)
+    // TAB CONTROL PRINCIPAL
     // ══════════════════════════════════════════
 
     [ObservableProperty] private int _tabSeleccionado;
-
-    /// <summary>Sub-tab dentro de "Recibos": 0 = INGRESOS, 1 = SALIDAS.</summary>
     [ObservableProperty] private int _subTabRecibos;
-
     partial void OnSubTabRecibosChanged(int value) { }
 
     // ══════════════════════════════════════════
-    // TAB 1: LISTAS DE RECIBOS (separadas)
+    // TAB 1: LISTAS DE RECIBOS
     // ══════════════════════════════════════════
 
     public ObservableCollection<ReciboItem> RecibosIngresos { get; } = new();
@@ -133,7 +166,7 @@ public partial class CajaChicaViewModel : BaseViewModel
     [ObservableProperty] private decimal _saldoFinal;
 
     // ══════════════════════════════════════════
-    // TAB 3: ARQUEO
+    // TAB 3: ARQUEO + HISTORIAL DE ARQUEOS
     // ══════════════════════════════════════════
 
     [ObservableProperty] private decimal _arqueoCaja;
@@ -146,25 +179,27 @@ public partial class CajaChicaViewModel : BaseViewModel
         ArqueoDiferencia = ArqueoCaja - value;
     }
 
+    // ── Historial de arqueos ──
+    public ObservableCollection<ArqueoHistorialItem> HistorialArqueos { get; } = new();
+
+    [ObservableProperty] private DateTime _historialDesde = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+    [ObservableProperty] private DateTime _historialHasta = DateTime.Now;
+    [ObservableProperty] private int _totalHistorialPendientes;
+    [ObservableProperty] private int _totalHistorialExportados;
+    [ObservableProperty] private int _totalHistorialImportados;
+    [ObservableProperty] private bool _historialSinResultados;
+
     // ══════════════════════════════════════════
     // DIÁLOGO: CREAR / EDITAR RECIBO
     // ══════════════════════════════════════════
 
     [ObservableProperty] private bool _dialogoAbierto;
     [ObservableProperty] private string _dialogoTitulo = "Nuevo Recibo";
-
     [ObservableProperty] private int _formNumeroRecibo;
     [ObservableProperty] private string _formNumeroFormateado = "";
     [ObservableProperty] private DateTime _formFecha = DateTime.Now;
     [ObservableProperty] private string _formBeneficiario = "";
-
-    /// <summary>
-    /// Etiqueta dinámica del campo Beneficiario según el tipo de movimiento.
-    /// - Entrada → "Recibido del Sr.(a)"
-    /// - Salida  → "Páguese al Sr.(a)"
-    /// </summary>
     [ObservableProperty] private string _labelFormBeneficiario = "Recibido del Sr.(a)";
-
     [ObservableProperty] private decimal _formMonto;
     [ObservableProperty] private string _formMontoLetras = "";
     [ObservableProperty] private string _formConcepto = "";
@@ -188,12 +223,9 @@ public partial class CajaChicaViewModel : BaseViewModel
 
     partial void OnFormTipoMovimientoChanged(string value)
     {
-        // Actualizar etiqueta del beneficiario según el tipo
         LabelFormBeneficiario = value == "Salida"
             ? "Páguese al Sr.(a)"
             : "Recibido del Sr.(a)";
-
-        // Recalcular el número correlativo del talonario correspondiente
         _ = ActualizarNumeroFormularioAsync();
     }
 
@@ -292,6 +324,7 @@ public partial class CajaChicaViewModel : BaseViewModel
                 BeneficiariosAnteriores.Add(b);
 
             await CargarLibroDiarioAsync(db);
+            await CargarHistorialArqueosInternoAsync(db);
 
             ArqueoCaja = SaldoFinal;
             ArqueoDiferencia = ArqueoCaja - ArqueoFisico;
@@ -394,7 +427,289 @@ public partial class CajaChicaViewModel : BaseViewModel
         ArqueoDiferencia = ArqueoCaja - ArqueoFisico;
     }
 
-    // ── Nuevo Recibo ──
+    // ══════════════════════════════════════════
+    // EXPORTAR LIBRO DIARIO A EXCEL
+    // ══════════════════════════════════════════
+
+    [RelayCommand]
+    private async Task ExportarLibroDiarioExcelAsync()
+    {
+        if (MovimientosDiario.Count == 0)
+        {
+            MessageBox.Show("No hay movimientos en el rango seleccionado para exportar.",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        try
+        {
+            using var scope = App.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+            var empresa = await db.Empresas.FirstOrDefaultAsync();
+            var nombreEmpresa = empresa?.RazonSocial ?? "Empresa Minera";
+
+            var dialog = new SaveFileDialog
+            {
+                Filter = "Excel (*.xlsx)|*.xlsx",
+                FileName = $"LibroDiario_{DiarioDesde:yyyyMMdd}_{DiarioHasta:yyyyMMdd}.xlsx",
+                Title = "Exportar Libro Diario a Excel"
+            };
+            if (dialog.ShowDialog() != true) return;
+
+            var filas = MovimientosDiario.Select(m => new LibroDiarioExcelRow
+            {
+                Fecha = m.Fecha,
+                Detalle = m.Detalle,
+                Entrada = m.Entrada,
+                Salida = m.Salida,
+                Saldo = m.Saldo,
+                Concepto = m.Concepto,
+                Cuenta = m.Cuenta
+            }).ToList();
+
+            var rangoTexto = $"Del {DiarioDesde:dd/MM/yyyy} al {DiarioHasta:dd/MM/yyyy}";
+
+            var bytes = LibroDiarioExcelReport.Generar(
+                filas, rangoTexto, nombreEmpresa,
+                TotalEntradas, TotalSalidasDiario, SaldoFinal);
+
+            await File.WriteAllBytesAsync(dialog.FileName, bytes);
+
+            MessageBox.Show($"Excel guardado en:\n{dialog.FileName}", "SILF",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al exportar: {ex.Message}", "SILF",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    // ══════════════════════════════════════════
+    // HISTORIAL DE ARQUEOS
+    // ══════════════════════════════════════════
+
+    private async Task CargarHistorialArqueosInternoAsync(SilfDbContext db)
+    {
+        var lista = await db.ArqueosCaja
+            .Where(a => a.Fecha >= HistorialDesde && a.Fecha <= HistorialHasta.AddDays(1))
+            .OrderByDescending(a => a.Fecha)
+            .ThenByDescending(a => a.Id)
+            .ToListAsync();
+
+        HistorialArqueos.Clear();
+        foreach (var a in lista)
+        {
+            HistorialArqueos.Add(new ArqueoHistorialItem
+            {
+                Id = a.Id,
+                IdentificadorUnico = a.IdentificadorUnico,
+                Fecha = a.Fecha,
+                SaldoContable = a.SaldoContable,
+                SaldoFisico = a.SaldoFisico,
+                Diferencia = a.Diferencia,
+                Observaciones = a.Observaciones,
+                RealizadoPor = a.RealizadoPor,
+                Exportado = a.Exportado,
+                FechaExportacion = a.FechaExportacion,
+                OrigenImportacion = a.OrigenImportacion
+            });
+        }
+
+        TotalHistorialImportados = HistorialArqueos.Count(h => h.EsImportado);
+        TotalHistorialExportados = HistorialArqueos.Count(h => h.Exportado && !h.EsImportado);
+        TotalHistorialPendientes = HistorialArqueos.Count(h => !h.Exportado && !h.EsImportado);
+        HistorialSinResultados = HistorialArqueos.Count == 0;
+    }
+
+    [RelayCommand]
+    private async Task FiltrarHistorialArqueosAsync()
+    {
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+        await CargarHistorialArqueosInternoAsync(db);
+    }
+
+    // ══════════════════════════════════════════
+    // EXPORTAR ARQUEOS PENDIENTES (.silf-arqueo)
+    // ══════════════════════════════════════════
+
+    [RelayCommand]
+    private async Task ExportarArqueosAsync()
+    {
+        // Exporta los arqueos pendientes (no exportados todavía y no importados de otra PC).
+        var pendientes = HistorialArqueos.Where(h => !h.Exportado && !h.EsImportado).ToList();
+
+        if (pendientes.Count == 0)
+        {
+            MessageBox.Show(
+                "No hay arqueos pendientes de exportar en el rango actual.\n\n" +
+                "Sugerencia: ajustá el filtro de fechas si querés exportar arqueos antiguos.",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var confirmar = MessageBox.Show(
+            $"Se exportarán {pendientes.Count} arqueo(s) pendiente(s) a un archivo .silf-arqueo.\n\n" +
+            "El archivo está encriptado y solo se puede abrir desde SILF.\n\n" +
+            "¿Desea continuar?",
+            "SILF — Exportar Arqueos",
+            MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (confirmar != MessageBoxResult.Yes) return;
+
+        try
+        {
+            using var scope = App.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+
+            var empresa = await db.Empresas.FirstOrDefaultAsync();
+            var nombreEmpresa = empresa?.RazonSocial ?? "Empresa Minera";
+
+            var ids = pendientes.Select(p => p.Id).ToList();
+            var arqueos = await db.ArqueosCaja.Where(a => ids.Contains(a.Id)).ToListAsync();
+
+            // Generar archivo
+            var bytes = ArqueoExportService.Generar(arqueos, _nombreUsuario, nombreEmpresa);
+            var nombreSugerido = ArqueoExportService.SugerirNombreArchivo(_nombreUsuario);
+
+            var dialog = new SaveFileDialog
+            {
+                Filter = "Archivo SILF Arqueo (*.silf-arqueo)|*.silf-arqueo",
+                FileName = nombreSugerido,
+                Title = "Guardar archivo de arqueos para el Administrador"
+            };
+            if (dialog.ShowDialog() != true) return;
+
+            await File.WriteAllBytesAsync(dialog.FileName, bytes);
+
+            // Marcar los arqueos como exportados
+            var ahora = DateTime.Now;
+            foreach (var a in arqueos)
+            {
+                a.Exportado = true;
+                a.FechaExportacion = ahora;
+            }
+            await db.SaveChangesAsync();
+
+            MessageBox.Show(
+                $"✓ Se exportaron {arqueos.Count} arqueo(s) correctamente.\n\n" +
+                $"Archivo: {Path.GetFileName(dialog.FileName)}\n\n" +
+                "Entregá el archivo al Administrador para que lo importe.",
+                "SILF — Exportación exitosa",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+
+            await CargarHistorialArqueosInternoAsync(db);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al exportar arqueos: {ex.Message}", "SILF",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    // ══════════════════════════════════════════
+    // IMPORTAR ARQUEOS (.silf-arqueo) — solo Admin
+    // ══════════════════════════════════════════
+
+    [RelayCommand]
+    private async Task ImportarArqueosAsync()
+    {
+        if (!_esAdmin)
+        {
+            MessageBox.Show("Solo el Administrador puede importar arqueos.", "SILF",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Archivo SILF Arqueo (*.silf-arqueo)|*.silf-arqueo|Todos los archivos (*.*)|*.*",
+            Title = "Seleccione el archivo de arqueos a importar"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var payload = ArqueoImportService.LeerArchivo(dialog.FileName);
+
+            using var scope = App.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+
+            // Obtener identificadores existentes para deduplicar
+            var existentes = await db.ArqueosCaja
+                .Select(a => a.IdentificadorUnico)
+                .ToListAsync();
+            var setExistentes = new HashSet<string>(existentes, StringComparer.OrdinalIgnoreCase);
+
+            var (aImportar, duplicados) = ArqueoImportService.Deduplicar(payload, setExistentes);
+
+            if (aImportar.Count == 0)
+            {
+                MessageBox.Show(
+                    $"El archivo contiene {payload.Cantidad} arqueo(s), pero todos ya existen en la base de datos.\n\n" +
+                    "No se importó ninguno (todos son duplicados).",
+                    "SILF — Importación",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var confirmar = MessageBox.Show(
+                $"Archivo: {Path.GetFileName(dialog.FileName)}\n" +
+                $"Origen: {ArqueoImportService.GenerarTextoOrigen(payload)}\n\n" +
+                $"Total en el archivo:     {payload.Cantidad}\n" +
+                $"Se importarán:           {aImportar.Count}\n" +
+                $"Duplicados (se omiten):  {duplicados.Count}\n\n" +
+                "¿Desea continuar?",
+                "SILF — Confirmar Importación",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (confirmar != MessageBoxResult.Yes) return;
+
+            var textoOrigen = ArqueoImportService.GenerarTextoOrigen(payload);
+            foreach (var a in aImportar)
+            {
+                db.ArqueosCaja.Add(new ArqueoCaja
+                {
+                    IdentificadorUnico = a.IdentificadorUnico,
+                    Fecha = a.Fecha,
+                    SaldoContable = a.SaldoContable,
+                    SaldoFisico = a.SaldoFisico,
+                    Diferencia = a.Diferencia,
+                    Observaciones = a.Observaciones,
+                    RealizadoPor = a.RealizadoPor,
+                    Exportado = true,                  // ya fue exportado por el origen
+                    FechaExportacion = payload.FechaExportacion,
+                    OrigenImportacion = textoOrigen
+                });
+            }
+
+            await db.SaveChangesAsync();
+
+            MessageBox.Show(
+                $"✓ Importación completada.\n\n" +
+                $"Arqueos importados: {aImportar.Count}\n" +
+                $"Duplicados omitidos: {duplicados.Count}",
+                "SILF — Importación exitosa",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+
+            await CargarHistorialArqueosInternoAsync(db);
+        }
+        catch (SilfArqueoFormatException ex)
+        {
+            MessageBox.Show(
+                $"El archivo no es válido o está corrupto:\n\n{ex.Message}",
+                "SILF — Archivo inválido",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al importar: {ex.Message}", "SILF",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    // ══════════════════════════════════════════
+    // CRUD RECIBOS
+    // ══════════════════════════════════════════
 
     [RelayCommand]
     private async Task NuevoReciboAsync()
@@ -417,8 +732,6 @@ public partial class CajaChicaViewModel : BaseViewModel
         TieneError = false;
         DialogoAbierto = true;
     }
-
-    // ── Editar Recibo ──
 
     [RelayCommand]
     private async Task EditarReciboAsync(int reciboId)
@@ -455,8 +768,6 @@ public partial class CajaChicaViewModel : BaseViewModel
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
-
-    // ── Guardar ──
 
     [RelayCommand]
     private async Task GuardarReciboAsync()
@@ -515,8 +826,6 @@ public partial class CajaChicaViewModel : BaseViewModel
             TieneError = true;
         }
     }
-
-    // ── Eliminar ──
 
     [RelayCommand]
     private void PedirEliminarRecibo(int reciboId)
@@ -580,6 +889,10 @@ public partial class CajaChicaViewModel : BaseViewModel
             await NavegarARecibo(reciboId);
     }
 
+    // ══════════════════════════════════════════
+    // GUARDAR ARQUEO
+    // ══════════════════════════════════════════
+
     [RelayCommand]
     private async Task GuardarArqueoAsync()
     {
@@ -590,19 +903,31 @@ public partial class CajaChicaViewModel : BaseViewModel
 
             var arqueo = new ArqueoCaja
             {
+                IdentificadorUnico = Guid.NewGuid().ToString(),
                 Fecha = DateTime.Now,
                 SaldoContable = ArqueoCaja,
                 SaldoFisico = ArqueoFisico,
                 Diferencia = ArqueoDiferencia,
                 Observaciones = string.IsNullOrWhiteSpace(ArqueoObservaciones) ? null : ArqueoObservaciones.Trim(),
-                RealizadoPor = "Admin"
+                RealizadoPor = _nombreUsuario,
+                Exportado = false,
+                FechaExportacion = null,
+                OrigenImportacion = null
             };
 
             db.ArqueosCaja.Add(arqueo);
             await db.SaveChangesAsync();
 
-            MessageBox.Show("Arqueo guardado correctamente.", "SILF",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show($"Arqueo guardado correctamente.\nRealizado por: {_nombreUsuario}",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Limpiar formulario para próximo arqueo
+            ArqueoFisico = 0;
+            ArqueoObservaciones = "";
+            ArqueoDiferencia = ArqueoCaja;
+
+            // Refrescar historial
+            await CargarHistorialArqueosInternoAsync(db);
         }
         catch (Exception ex)
         {
