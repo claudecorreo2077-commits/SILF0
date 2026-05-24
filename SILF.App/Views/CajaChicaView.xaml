@@ -48,11 +48,12 @@
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                               Margin="0,0,0,12"/>
 
-                    <!-- Fila 3: Beneficiario -->
+                    <!-- Fila 3: Beneficiario — hint dinámico según tipo de movimiento -->
+                    <!-- Entrada → "Recibido del Sr.(a)"     Salida → "Páguese al Sr.(a)" -->
                     <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                               ItemsSource="{Binding BeneficiariosAnteriores}"
                               Text="{Binding FormBeneficiario, UpdateSourceTrigger=PropertyChanged}"
-                              md:HintAssist.Hint="Recibo del Sr.(a)"
+                              md:HintAssist.Hint="{Binding LabelFormBeneficiario}"
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                               Margin="0,0,0,12"/>
 
@@ -64,7 +65,7 @@
                              FontWeight="SemiBold" FontSize="15"
                              Margin="0,0,0,4"/>
 
-                    <!-- Cantidad en letras (solo lectura) -->
+                    <!-- Cantidad en letras -->
                     <TextBlock Text="{Binding FormMontoLetras}" FontSize="11"
                                Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
                                TextWrapping="Wrap" Margin="4,0,0,12"
@@ -153,7 +154,6 @@
                         </TabItem.Header>
 
                         <DockPanel Margin="20">
-                            <!-- Barra superior: buscador + nuevo recibo -->
                             <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -178,7 +178,6 @@
                                 </Button>
                             </Grid>
 
-                            <!-- Sub-TabControl: INGRESOS / SALIDAS -->
                             <TabControl SelectedIndex="{Binding SubTabRecibos}"
                                         TabStripPlacement="Top">
 
@@ -505,7 +504,6 @@
                                         </Grid>
                                     </Border>
 
-                                    <!-- Saldo físico con NumericInput -->
                                     <TextBox Text="{Binding ArqueoFisico, StringFormat=\{0:0.####\}, ConverterCulture=en-US, UpdateSourceTrigger=PropertyChanged}"
                                              md:HintAssist.Hint="Saldo Físico (conteo manual)"
                                              b:NumericInput.IsEnabled="True"

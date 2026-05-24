@@ -79,11 +79,7 @@ public partial class CajaChicaViewModel : BaseViewModel
     /// <summary>Sub-tab dentro de "Recibos": 0 = INGRESOS, 1 = SALIDAS.</summary>
     [ObservableProperty] private int _subTabRecibos;
 
-    partial void OnSubTabRecibosChanged(int value)
-    {
-        // Si está abierto el diálogo de "Nuevo recibo" cuando el usuario cambia
-        // de sub-tab, NO actualizamos (sería confuso). Solo afecta a próximas creaciones.
-    }
+    partial void OnSubTabRecibosChanged(int value) { }
 
     // ══════════════════════════════════════════
     // TAB 1: LISTAS DE RECIBOS (separadas)
@@ -161,6 +157,14 @@ public partial class CajaChicaViewModel : BaseViewModel
     [ObservableProperty] private string _formNumeroFormateado = "";
     [ObservableProperty] private DateTime _formFecha = DateTime.Now;
     [ObservableProperty] private string _formBeneficiario = "";
+
+    /// <summary>
+    /// Etiqueta dinámica del campo Beneficiario según el tipo de movimiento.
+    /// - Entrada → "Recibido del Sr.(a)"
+    /// - Salida  → "Páguese al Sr.(a)"
+    /// </summary>
+    [ObservableProperty] private string _labelFormBeneficiario = "Recibido del Sr.(a)";
+
     [ObservableProperty] private decimal _formMonto;
     [ObservableProperty] private string _formMontoLetras = "";
     [ObservableProperty] private string _formConcepto = "";
@@ -184,8 +188,12 @@ public partial class CajaChicaViewModel : BaseViewModel
 
     partial void OnFormTipoMovimientoChanged(string value)
     {
-        // Si el usuario cambia el tipo durante la creación/edición, recalcular
-        // el número correlativo del nuevo talonario.
+        // Actualizar etiqueta del beneficiario según el tipo
+        LabelFormBeneficiario = value == "Salida"
+            ? "Páguese al Sr.(a)"
+            : "Recibido del Sr.(a)";
+
+        // Recalcular el número correlativo del talonario correspondiente
         _ = ActualizarNumeroFormularioAsync();
     }
 
@@ -198,7 +206,6 @@ public partial class CajaChicaViewModel : BaseViewModel
 
             if (_editandoId.HasValue && FormTipoMovimiento == _tipoOriginalAlEditar)
             {
-                // Editando y NO cambió el tipo: mantener el número original
                 var existente = await db.RecibosCaja.FindAsync(_editandoId.Value);
                 if (existente != null)
                 {
@@ -208,14 +215,13 @@ public partial class CajaChicaViewModel : BaseViewModel
                 return;
             }
 
-            // Creando, o editando con cambio de tipo: tomar próximo correlativo del tipo actual
             var max = await db.RecibosCaja
                 .Where(r => r.TipoMovimiento == FormTipoMovimiento)
                 .MaxAsync(r => (int?)r.NumeroRecibo) ?? 0;
             FormNumeroRecibo = max + 1;
             FormNumeroFormateado = $"{FormTipoMovimiento.ToUpperInvariant()} #{FormNumeroRecibo:D3}";
         }
-        catch { /* silencioso para el bind */ }
+        catch { }
     }
 
     // ══════════════════════════════════════════
@@ -239,7 +245,6 @@ public partial class CajaChicaViewModel : BaseViewModel
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
 
-            // Cargar recibos separados por tipo
             var recibos = await db.RecibosCaja
                 .Where(r => r.Visible)
                 .OrderByDescending(r => r.NumeroRecibo)
@@ -275,7 +280,6 @@ public partial class CajaChicaViewModel : BaseViewModel
             SinResultadosIngresos = false;
             SinResultadosSalidas = false;
 
-            // Cargar beneficiarios únicos para autocompletar
             var beneficiarios = await db.RecibosCaja
                 .Where(r => r.Visible)
                 .Select(r => r.Beneficiario)
@@ -287,10 +291,8 @@ public partial class CajaChicaViewModel : BaseViewModel
             foreach (var b in beneficiarios)
                 BeneficiariosAnteriores.Add(b);
 
-            // Cargar libro diario
             await CargarLibroDiarioAsync(db);
 
-            // Cargar saldo para arqueo
             ArqueoCaja = SaldoFinal;
             ArqueoDiferencia = ArqueoCaja - ArqueoFisico;
         }
@@ -393,7 +395,6 @@ public partial class CajaChicaViewModel : BaseViewModel
     }
 
     // ── Nuevo Recibo ──
-    // Pre-selecciona el tipo según el sub-tab activo (0=Entrada, 1=Salida).
 
     [RelayCommand]
     private async Task NuevoReciboAsync()
@@ -478,7 +479,6 @@ public partial class CajaChicaViewModel : BaseViewModel
                 recibo = await db.RecibosCaja.FindAsync(_editandoId.Value)
                     ?? throw new Exception("Recibo no encontrado");
 
-                // Si el tipo cambió, reasignar el número (próximo del nuevo talonario)
                 if (FormTipoMovimiento != _tipoOriginalAlEditar)
                 {
                     var max = await db.RecibosCaja
@@ -489,7 +489,6 @@ public partial class CajaChicaViewModel : BaseViewModel
             }
             else
             {
-                // Recalcular el número justo antes de insertar (evita race conditions)
                 var max = await db.RecibosCaja
                     .Where(r => r.TipoMovimiento == FormTipoMovimiento)
                     .MaxAsync(r => (int?)r.NumeroRecibo) ?? 0;
@@ -566,8 +565,6 @@ public partial class CajaChicaViewModel : BaseViewModel
         _eliminarId = null;
     }
 
-    // ── Cancelar diálogo ──
-
     [RelayCommand]
     private void CancelarDialogo()
     {
@@ -576,16 +573,12 @@ public partial class CajaChicaViewModel : BaseViewModel
         _tipoOriginalAlEditar = "";
     }
 
-    // ── Imprimir Recibo ──
-
     [RelayCommand]
     private async Task ImprimirReciboAsync(int reciboId)
     {
         if (NavegarARecibo != null)
             await NavegarARecibo(reciboId);
     }
-
-    // ── Guardar Arqueo ──
 
     [RelayCommand]
     private async Task GuardarArqueoAsync()
