@@ -29,3 +29,7 @@ _temp/
 
 *.pdf
 *.xlsx
+
+# PDFs generados
+SILF.App/Assets/Images/Liquidacion_*.pdf
+SILF.App/Assets/Images/ReciboAnticipo_*.pdf
