@@ -1,35 +1,24 @@
-## .NET
-bin/
-obj/
+﻿# Compilacion .NET
+[Bb]in/
+[Oo]bj/
+publish/
+.vs/
 *.user
 *.suo
-*.userosscache
-*.sln.docstates
 
-## SQLite DB (se genera automáticamente)
+# Instalador / binarios grandes (usar GitHub Releases)
+installer_output/
+
+# Datos locales
 *.db
 *.db-shm
 *.db-wal
+silf_backup_*.db
+silf_antes_importar_*.db
 
-## Visual Studio
-.vs/
-*.rsuser
-*.csproj.user
-
-## Rider
-.idea/
-
-## OS
-Thumbs.db
-.DS_Store
-
-## Build
-publish/
-_temp/
-
+# Reportes generados
 *.pdf
 *.xlsx
 
-# PDFs generados
-SILF.App/Assets/Images/Liquidacion_*.pdf
-SILF.App/Assets/Images/ReciboAnticipo_*.pdf
+# Temporales
+_temp/
