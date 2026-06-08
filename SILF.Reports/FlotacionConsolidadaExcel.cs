@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\FlotacionConsolidadaExcel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\FlotacionConsolidadaExcel.cs
 using ClosedXML.Excel;
 using SILF.Core.Models;
 

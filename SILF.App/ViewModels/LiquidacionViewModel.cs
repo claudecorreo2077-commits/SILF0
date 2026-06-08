@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LiquidacionViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LiquidacionViewModel.cs
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -68,7 +68,9 @@ public partial class LiquidacionViewModel : BaseViewModel
     [ObservableProperty] private decimal _porcentajeCooperativa;
     partial void OnPorcentajeCooperativaChanged(decimal value) => Recalcular();
 
-    [ObservableProperty] private bool _aplicaIue = true;
+    // Retenciones IUE Bienes: NO es recurrente, por eso arranca DESTILDADO.
+    // Se habilita manualmente solo cuando corresponde aplicarlo.
+    [ObservableProperty] private bool _aplicaIue = false;
     partial void OnAplicaIueChanged(bool value) => Recalcular();
 
     [ObservableProperty] private decimal _costoLaboratorio;
@@ -168,7 +170,7 @@ public partial class LiquidacionViewModel : BaseViewModel
             TituloFormulario = $"Liquidar Lote #{lote.NumeroLote}";
             Humedad = 0; CotizacionZn = 0; CotizacionAg = 0; CotizacionPb = 0;
             PorcentajeCooperativa = 0; AplicaCooperativa = false;
-            AplicaIue = true; CostoLaboratorio = 0;
+            AplicaIue = false; CostoLaboratorio = 0;
             Observaciones = ""; FechaLiquidacion = DateTime.Today;
         }
         Recalcular();

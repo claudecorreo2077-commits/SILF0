@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Helpers\SilfCrypto.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Helpers\SilfCrypto.cs
 using System.Security.Cryptography;
 using System.Text;
 

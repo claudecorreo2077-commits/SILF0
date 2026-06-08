@@ -1,11 +1,12 @@
-<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\FlotacionView.xaml -->
+﻿<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\FlotacionView.xaml -->
 <UserControl x:Class="SILF.App.Views.FlotacionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes">
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
     <UserControl.Resources>
         <Style x:Key="ColRight" TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/></Style>
-        <!-- Header con fondo distinto -->
+        <!-- Header oscuro para la tabla de detalle -->
         <Style x:Key="HeaderStyle" TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
             <Setter Property="Background" Value="#37474F"/>
             <Setter Property="Foreground" Value="White"/>
@@ -16,108 +17,288 @@
             <Setter Property="BorderBrush" Value="#546E7A"/>
         </Style>
     </UserControl.Resources>
-    <DockPanel>
-        <!-- ═══ BANDA: PROCESO ACTIVO + BOTÓN FLOTAR ═══ -->
-        <Border DockPanel.Dock="Top" CornerRadius="8" Margin="0,0,0,12" Padding="14,8"
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- banda resumen -->
+            <RowDefinition Height="Auto"/>  <!-- disponibles -->
+            <RowDefinition Height="Auto"/>  <!-- flotaciones creadas -->
+            <RowDefinition Height="Auto"/>  <!-- filtros + totales -->
+            <RowDefinition Height="*"/>     <!-- detalle -->
+        </Grid.RowDefinitions>
+
+        <!-- BANDA RESUMEN -->
+        <Border Grid.Row="0" CornerRadius="8" Margin="0,0,0,12" Padding="14,10"
                 Background="{DynamicResource MaterialDesignCardBackground}"
-                BorderBrush="#FFA726" BorderThickness="1.5">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <md:PackIcon Grid.Column="0" Kind="Factory" Width="22" Height="22"
-                             Foreground="#FFA726" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBlock Grid.Column="1" Text="{Binding IndicadorProcesoTexto}"
-                           FontWeight="SemiBold" FontSize="13"
-                           Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
-                           VerticalAlignment="Center"/>
-                <Button Grid.Column="2" Cursor="Hand"
-                        Command="{Binding CortarProcesoCommand}"
-                        ToolTip="Cerrar proceso actual y abrir uno nuevo (reinicia el correlativo de lote)">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="bd" Background="#FFA726"
-                                    CornerRadius="8" Padding="22,9">
-                                <StackPanel Orientation="Horizontal">
-                                    <md:PackIcon Kind="ContentCut" Width="18" Height="18" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="FLOTAR" Foreground="White" FontFamily="Montserrat" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bd" Property="Background" Value="#FB8C00"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-            </Grid>
+                BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+                <md:PackIcon Kind="Flask" Width="22" Height="22"
+                             Foreground="{DynamicResource PrimaryHueMidBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="{Binding ResumenTexto}" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
+            </StackPanel>
         </Border>
 
-        <!-- ═══ BARRA SUPERIOR: FILTROS ═══ -->
-        <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="160"/><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <ComboBox Grid.Column="0" ItemsSource="{Binding FiltrosProceso}" SelectedItem="{Binding FiltroProceso}"
-                      Style="{StaticResource MaterialDesignOutlinedComboBox}" md:HintAssist.Hint="Proceso"
-                      md:HintAssist.FloatingScale="0.8" Margin="0,0,8,0"/>
-            <ComboBox Grid.Column="1" ItemsSource="{Binding FiltrosMina}" SelectedItem="{Binding FiltroMina}"
-                      Style="{StaticResource MaterialDesignOutlinedComboBox}" md:HintAssist.Hint="Mina"
-                      md:HintAssist.FloatingScale="0.8" Margin="0,0,8,0"/>
-            <TextBox Grid.Column="2" Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                     md:HintAssist.Hint="Buscar por proveedor, cooperativa, lote..."
-                     md:TextFieldAssist.HasLeadingIcon="True" md:TextFieldAssist.LeadingIcon="Magnify" Margin="0,0,8,0"/>
-            <Button Grid.Column="3" Command="{Binding ExportarExcelCommand}"
-                    Style="{StaticResource MaterialDesignOutlinedButton}" md:ButtonAssist.CornerRadius="6" Padding="16,6">
-                <StackPanel Orientation="Horizontal">
-                    <md:PackIcon Kind="FileExcel" Width="18" Height="18" Margin="0,0,6,0"/>
-                    <TextBlock Text="Excel" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Button>
-        </Grid>
+        <!-- POOL: LIQUIDACIONES DISPONIBLES -->
+        <md:Card Grid.Row="1" md:ElevationAssist.Elevation="Dp1" Padding="0" Margin="0,0,0,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-        <!-- ═══ RESUMEN ═══ -->
-        <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="0,0,6,0">
-                <StackPanel><TextBlock Text="Registros" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                    <TextBlock Text="{Binding CantidadRegistros}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource PrimaryHueMidBrush}"/></StackPanel></Border>
-            <Border Grid.Column="1" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="6,0">
-                <StackPanel><TextBlock Text="Valor Comercial" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                    <TextBlock Text="{Binding TotalValorComercial, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold"/></StackPanel></Border>
-            <Border Grid.Column="2" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="6,0">
-                <StackPanel><TextBlock Text="Total Deducciones" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                    <TextBlock Text="{Binding TotalDeducciones, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold" Foreground="#C62828"/></StackPanel></Border>
-            <Border Grid.Column="3" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="6,0">
-                <StackPanel><TextBlock Text="Líquido Pagable" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                    <TextBlock Text="{Binding TotalLiquidoPagable, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryHueMidBrush}"/></StackPanel></Border>
-            <Border Grid.Column="4" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="6,0,0,0">
-                <StackPanel><TextBlock Text="Laboratorio" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-                    <TextBlock Text="{Binding TotalLaboratorio, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold"/></StackPanel></Border>
-        </Grid>
+                <Grid Grid.Row="0" Margin="16,12,16,8">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="FormatListChecks" Width="20" Height="20"
+                                     Foreground="{DynamicResource PrimaryHueMidBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Liquidaciones disponibles" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Border Background="{DynamicResource PrimaryHueLightBrush}" CornerRadius="10" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding CantidadDisponibles}" FontSize="11" FontWeight="Bold"
+                                       Foreground="{DynamicResource PrimaryHueDarkBrush}"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
 
-        <!-- ═══ TABLA CONSOLIDADA ═══ -->
-        <md:Card md:ElevationAssist.Elevation="Dp1" Padding="0">
+                <Grid Grid.Row="1" MaxHeight="260">
+                    <DataGrid ItemsSource="{Binding Disponibles}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" CanUserDeleteRows="False"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                              Style="{StaticResource MaterialDesignDataGrid}"
+                              FontSize="12">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="" Width="56" CanUserSort="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" Cursor="Hand">
+                                            <CheckBox.Template>
+                                                <ControlTemplate TargetType="CheckBox">
+                                                    <Border x:Name="box" Width="22" Height="22" CornerRadius="4"
+                                                            BorderThickness="2" BorderBrush="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                                            Background="Transparent">
+                                                        <md:PackIcon x:Name="tick" Kind="Check" Width="18" Height="18"
+                                                                     Foreground="White" Visibility="Collapsed"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="box" Property="Background" Value="#3F51B5"/>
+                                                            <Setter TargetName="box" Property="BorderBrush" Value="#3F51B5"/>
+                                                            <Setter TargetName="tick" Property="Visibility" Value="Visible"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="box" Property="BorderBrush" Value="#3F51B5"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </CheckBox.Template>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="N° LOTE" Binding="{Binding NumeroLote}" Width="80"/>
+                            <DataGridTextColumn Header="F. LIQUIDACIÓN" Binding="{Binding FechaLiquidacion, StringFormat='{}{0:dd/MM/yyyy}'}" Width="120"/>
+                            <DataGridTextColumn Header="PROVEEDOR" Binding="{Binding Proveedor}" Width="*"/>
+                            <DataGridTextColumn Header="COOPERATIVA" Binding="{Binding Cooperativa}" Width="160"/>
+                            <DataGridTextColumn Header="MINA" Binding="{Binding Mina}" Width="120"/>
+                            <DataGridTextColumn Header="PESO NETO" Binding="{Binding PesoNeto, StringFormat='{}{0:N2}'}" Width="100" ElementStyle="{StaticResource ColRight}"/>
+                            <DataGridTextColumn Header="LÍQ. PAGABLE" Binding="{Binding LiquidoPagable, StringFormat='Bs {0:N2}'}" Width="130">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="No hay liquidaciones disponibles. Liquidá lotes para poder agruparlos en una flotación."
+                               FontSize="13" Foreground="{DynamicResource MaterialDesignBodyLight}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,30" IsHitTestVisible="False" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CantidadDisponibles}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+
+                <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource MaterialDesignDivider}" Padding="16,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Seleccionadas: " FontSize="13" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                            <TextBlock Text="{Binding SeleccionadasCount}" FontSize="13" FontWeight="Bold"/>
+                            <TextBlock Text="  ·  Total: " FontSize="13" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                            <TextBlock Text="{Binding SeleccionadasTotal, StringFormat='Bs {0:N2}'}" FontSize="13" FontWeight="Bold"
+                                       Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding CrearFlotacionCommand}"
+                                Style="{StaticResource MaterialDesignRaisedButton}" md:ButtonAssist.CornerRadius="6" Padding="18,8">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="Plus" Width="18" Height="18" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="CREAR FLOTACIÓN" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+        </md:Card>
+
+        <!-- FLOTACIONES CREADAS -->
+        <md:Card Grid.Row="2" md:ElevationAssist.Elevation="Dp1" Padding="0" Margin="0,0,0,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="16,12,16,8">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="Layers" Width="20" Height="20"
+                                     Foreground="{DynamicResource PrimaryHueMidBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Flotaciones creadas" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Border Background="{DynamicResource PrimaryHueLightBrush}" CornerRadius="10" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding CantidadFlotaciones}" FontSize="11" FontWeight="Bold"
+                                       Foreground="{DynamicResource PrimaryHueDarkBrush}"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="1" MaxHeight="180">
+                    <DataGrid ItemsSource="{Binding Flotaciones}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" CanUserDeleteRows="False"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                              Style="{StaticResource MaterialDesignDataGrid}"
+                              FontSize="12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="FLOTACIÓN" Binding="{Binding Label}" Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock"><Setter Property="FontWeight" Value="SemiBold"/></Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="FECHA" Binding="{Binding Fecha, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" Width="150"/>
+                            <DataGridTextColumn Header="N° LIQUIDACIONES" Binding="{Binding CantidadLotes}" Width="150" ElementStyle="{StaticResource ColRight}"/>
+                            <DataGridTextColumn Header="TOTAL LÍQ. PAGABLE" Binding="{Binding TotalLiquidoPagable, StringFormat='Bs {0:N2}'}" Width="170">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="" Width="60" CanUserSort="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button ToolTip="Eliminar flotación (las liquidaciones vuelven al pool)"
+                                                Command="{Binding DataContext.EliminarFlotacionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignIconButton}" Width="34" Height="34"
+                                                HorizontalAlignment="Center">
+                                            <md:PackIcon Kind="TrashCanOutline" Width="18" Height="18" Foreground="#C62828"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="Todavía no hay flotaciones. Seleccioná liquidaciones arriba y creá la primera."
+                               FontSize="13" Foreground="{DynamicResource MaterialDesignBodyLight}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,24" IsHitTestVisible="False" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CantidadFlotaciones}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </Grid>
+        </md:Card>
+
+        <!-- FILTROS + TOTALES DEL DETALLE -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,8">
+            <TextBlock Text="DETALLE CONSOLIDADO" FontSize="11" FontWeight="Bold"
+                       Foreground="{DynamicResource MaterialDesignBodyLight}" Margin="2,0,0,8"/>
+
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180"/><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Column="0" ItemsSource="{Binding FiltrosProceso}" SelectedItem="{Binding FiltroProceso}"
+                          Style="{StaticResource MaterialDesignOutlinedComboBox}" md:HintAssist.Hint="Flotación"
+                          md:HintAssist.FloatingScale="0.8" Margin="0,0,8,0"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding FiltrosMina}" SelectedItem="{Binding FiltroMina}"
+                          Style="{StaticResource MaterialDesignOutlinedComboBox}" md:HintAssist.Hint="Mina"
+                          md:HintAssist.FloatingScale="0.8" Margin="0,0,8,0"/>
+                <TextBox Grid.Column="2" Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         md:HintAssist.Hint="Buscar por proveedor, cooperativa, lote..."
+                         md:TextFieldAssist.HasLeadingIcon="True" md:TextFieldAssist.LeadingIcon="Magnify" Margin="0,0,8,0"/>
+                <Button Grid.Column="3" Command="{Binding ExportarExcelCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}" md:ButtonAssist.CornerRadius="6" Padding="16,6">
+                    <StackPanel Orientation="Horizontal">
+                        <md:PackIcon Kind="FileExcel" Width="18" Height="18" Margin="0,0,6,0"/>
+                        <TextBlock Text="Excel" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="0,0,6,0">
+                    <StackPanel><TextBlock Text="Registros" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                        <TextBlock Text="{Binding CantidadRegistros}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource PrimaryHueMidBrush}"/></StackPanel></Border>
+                <Border Grid.Column="1" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="6,0">
+                    <StackPanel><TextBlock Text="Valor Comercial" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                        <TextBlock Text="{Binding TotalValorComercial, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold"/></StackPanel></Border>
+                <Border Grid.Column="2" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="6,0">
+                    <StackPanel><TextBlock Text="Total Deducciones" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                        <TextBlock Text="{Binding TotalDeducciones, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold" Foreground="#C62828"/></StackPanel></Border>
+                <Border Grid.Column="3" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="6,0">
+                    <StackPanel><TextBlock Text="Líquido Pagable" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                        <TextBlock Text="{Binding TotalLiquidoPagable, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryHueMidBrush}"/></StackPanel></Border>
+                <Border Grid.Column="4" Background="{DynamicResource MaterialDesignCardBackground}" CornerRadius="8" Padding="12" Margin="6,0,0,0">
+                    <StackPanel><TextBlock Text="Laboratorio" FontSize="11" Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                        <TextBlock Text="{Binding TotalLaboratorio, StringFormat='Bs {0:N2}'}" FontSize="14" FontWeight="Bold"/></StackPanel></Border>
+            </Grid>
+        </StackPanel>
+
+        <!-- TABLA CONSOLIDADA -->
+        <md:Card Grid.Row="4" md:ElevationAssist.Elevation="Dp1" Padding="0">
             <DataGrid ItemsSource="{Binding RegistrosView}" AutoGenerateColumns="False" IsReadOnly="True"
                       CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeColumns="True"
                       HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                       HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
                       HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                       Style="{StaticResource MaterialDesignDataGrid}"
-                      RowStyle="{StaticResource MaterialDesignDataGridRow}"
-                      CellStyle="{StaticResource MaterialDesignDataGridCell}"
                       ColumnHeaderStyle="{StaticResource HeaderStyle}"
                       FontSize="11">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="N°" Binding="{Binding NumeroEnProceso}" Width="SizeToHeader"/>
-                    <DataGridTextColumn Header="PROCESO" Binding="{Binding ProcesoLabel}" Width="SizeToHeader"/>
+                    <DataGridTextColumn Header="FLOTACIÓN" Binding="{Binding ProcesoLabel}" Width="SizeToHeader"/>
                     <DataGridTextColumn Header="TICKET" Binding="{Binding Ticket}" Width="SizeToHeader"/>
                     <DataGridTextColumn Header="F. INGRESO" Binding="{Binding FechaIngreso, StringFormat='{}{0:dd/MM/yy}'}" Width="SizeToHeader"/>
                     <DataGridTextColumn Header="F. LIQUIDACIÓN" Binding="{Binding FechaLiquidacion, StringFormat='{}{0:dd/MM/yy}'}" Width="SizeToHeader"/>
@@ -151,5 +332,5 @@
                 </DataGrid.Columns>
             </DataGrid>
         </md:Card>
-    </DockPanel>
+    </Grid>
 </UserControl>

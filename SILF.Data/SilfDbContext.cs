@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Data\SilfDbContext.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Data\SilfDbContext.cs
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using SILF.Core.Models;
@@ -22,6 +22,7 @@ public class SilfDbContext : DbContext
     public DbSet<Lote> Lotes => Set<Lote>();
     public DbSet<Liquidacion> Liquidaciones => Set<Liquidacion>();
     public DbSet<Flotacion> Flotaciones => Set<Flotacion>();
+    public DbSet<Concentrado> Concentrados => Set<Concentrado>();
     public DbSet<Pago> Pagos => Set<Pago>();
     public DbSet<BonoTransporte> BonosTransporte => Set<BonoTransporte>();
 
@@ -92,7 +93,7 @@ public class SilfDbContext : DbContext
                 }
 
                 // ════════════════════════════════════════
-                // ProcesosFlotacion: tabla nueva
+                // ProcesosFlotacion: tabla (las "flotaciones")
                 // ════════════════════════════════════════
                 if (!ExisteTabla(conn, "ProcesosFlotacion"))
                 {
@@ -109,40 +110,16 @@ public class SilfDbContext : DbContext
                 }
 
                 // ════════════════════════════════════════
-                // Lotes: FK al proceso de flotación
+                // Lotes: FK al proceso de flotación AHORA ANULABLE.
+                // NULL = lote disponible (liquidado, sin flotación).
+                // Las flotaciones se arman manualmente seleccionando liquidaciones.
                 // ════════════════════════════════════════
                 var columnasLotes = ListarColumnas(conn, "Lotes");
 
                 if (!columnasLotes.Contains("ProcesoFlotacionId"))
                 {
-                    var cantProcesos = EscalarLong(conn, "SELECT COUNT(*) FROM ProcesosFlotacion;");
-                    if (cantProcesos == 0)
-                    {
-                        var ahora = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                        EjecutarSql(conn,
-                            $"INSERT INTO ProcesosFlotacion (NumeroProceso, FechaApertura, FechaCierre, Estado, Observaciones) " +
-                            $"VALUES (1, '{ahora}', NULL, 0, 'Proceso inicial creado por migración automática');");
-                    }
-                    var procesoInicialId = EscalarLong(conn,
-                        "SELECT Id FROM ProcesosFlotacion ORDER BY NumeroProceso ASC LIMIT 1;");
-
-                    EjecutarSql(conn,
-                        $"ALTER TABLE Lotes ADD COLUMN ProcesoFlotacionId INTEGER NOT NULL DEFAULT {procesoInicialId};");
-
+                    EjecutarSql(conn, "ALTER TABLE Lotes ADD COLUMN ProcesoFlotacionId INTEGER NULL;");
                     EjecutarSql(conn, "CREATE INDEX IF NOT EXISTS IX_Lotes_ProcesoFlotacionId ON Lotes (ProcesoFlotacionId);");
-                }
-
-                // Asegurar siempre un proceso abierto
-                var hayAbierto = EscalarLong(conn,
-                    "SELECT COUNT(*) FROM ProcesosFlotacion WHERE Estado = 0;");
-                if (hayAbierto == 0)
-                {
-                    var maxNum = EscalarLong(conn,
-                        "SELECT COALESCE(MAX(NumeroProceso), 0) FROM ProcesosFlotacion;");
-                    var ahora = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                    EjecutarSql(conn,
-                        $"INSERT INTO ProcesosFlotacion (NumeroProceso, FechaApertura, FechaCierre, Estado, Observaciones) " +
-                        $"VALUES ({maxNum + 1}, '{ahora}', NULL, 0, NULL);");
                 }
 
                 // ════════════════════════════════════════
@@ -168,44 +145,33 @@ public class SilfDbContext : DbContext
 
                 // ════════════════════════════════════════
                 // ArqueosCaja: columnas de exportación/importación
-                // Identificador único + flags de exportado/importado.
-                // Para los arqueos ya existentes en la BD se generan Guids nuevos.
                 // ════════════════════════════════════════
                 if (ExisteTabla(conn, "ArqueosCaja"))
                 {
                     var columnasArqueos = ListarColumnas(conn, "ArqueosCaja");
 
-                    // 1. IdentificadorUnico
                     if (!columnasArqueos.Contains("IdentificadorUnico"))
                     {
-                        // Paso 1: agregar la columna sin restricción (nullable por defecto)
                         EjecutarSql(conn,
                             "ALTER TABLE ArqueosCaja ADD COLUMN IdentificadorUnico TEXT NULL;");
-
-                        // Paso 2: poblar todos los arqueos existentes con Guids nuevos
                         PoblarIdentificadoresArqueos(conn);
-
-                        // Paso 3: crear índice único (después del poblado, ya no hay nulos)
                         EjecutarSql(conn,
                             "CREATE UNIQUE INDEX IX_ArqueosCaja_IdentificadorUnico " +
                             "ON ArqueosCaja (IdentificadorUnico);");
                     }
 
-                    // 2. Exportado
                     if (!columnasArqueos.Contains("Exportado"))
                     {
                         EjecutarSql(conn,
                             "ALTER TABLE ArqueosCaja ADD COLUMN Exportado INTEGER NOT NULL DEFAULT 0;");
                     }
 
-                    // 3. FechaExportacion
                     if (!columnasArqueos.Contains("FechaExportacion"))
                     {
                         EjecutarSql(conn,
                             "ALTER TABLE ArqueosCaja ADD COLUMN FechaExportacion TEXT NULL;");
                     }
 
-                    // 4. OrigenImportacion
                     if (!columnasArqueos.Contains("OrigenImportacion"))
                     {
                         EjecutarSql(conn,
@@ -252,9 +218,7 @@ public class SilfDbContext : DbContext
     }
 
     /// <summary>
-    /// Renumera los recibos existentes: ordenados por (Fecha asc, Id asc) DENTRO
-    /// de cada TipoMovimiento, asigna NumeroRecibo = 1, 2, 3... empezando desde 1
-    /// para cada tipo.
+    /// Renumera los recibos existentes por TipoMovimiento, desde 1.
     /// </summary>
     private static void RenumerarRecibosPorTipo(SqliteConnection conn)
     {
@@ -394,11 +358,16 @@ public class SilfDbContext : DbContext
             .HasForeignKey(l => l.MinaId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Lote → ProcesoFlotacion: OPCIONAL.
+        // Al eliminar una flotación, los lotes quedan con FK null (disponibles).
+        // En la práctica desvinculamos manualmente antes de borrar, pero SetNull
+        // es la red de seguridad declarada.
         modelBuilder.Entity<Lote>()
             .HasOne(l => l.ProcesoFlotacion)
             .WithMany(pf => pf.Lotes)
             .HasForeignKey(l => l.ProcesoFlotacionId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<Proveedor>()
             .HasOne(p => p.Cooperativa)
@@ -426,7 +395,7 @@ public class SilfDbContext : DbContext
             .HasIndex(l => l.FechaRegistro);
 
         modelBuilder.Entity<Lote>()
-            .HasIndex(l => new { l.ProcesoFlotacionId, l.NumeroLote });
+            .HasIndex(l => l.ProcesoFlotacionId);
 
         modelBuilder.Entity<ProcesoFlotacion>()
             .HasIndex(p => p.NumeroProceso)
@@ -440,8 +409,6 @@ public class SilfDbContext : DbContext
             .HasIndex(r => new { r.TipoMovimiento, r.NumeroRecibo })
             .IsUnique();
 
-        // ── ArqueoCaja: IdentificadorUnico es la clave global del arqueo,
-        //    se usa para deduplicar al importar desde otra PC. ──
         modelBuilder.Entity<ArqueoCaja>()
             .HasIndex(a => a.IdentificadorUnico)
             .IsUnique();
@@ -477,14 +444,7 @@ public class SilfDbContext : DbContext
             new Mina { Id = 3, Nombre = "HUAYNA PORCO" }
         );
 
-        modelBuilder.Entity<ProcesoFlotacion>().HasData(new ProcesoFlotacion
-        {
-            Id = 1,
-            NumeroProceso = 1,
-            FechaApertura = new DateTime(2026, 1, 1),
-            FechaCierre = null,
-            Estado = EstadoProcesoFlotacion.Abierto,
-            Observaciones = "Proceso inicial"
-        });
+        // NOTA: ya NO se siembra ningún ProcesoFlotacion. Las flotaciones se crean
+        // a demanda agrupando liquidaciones disponibles desde el módulo Inv. Flotación.
     }
 }

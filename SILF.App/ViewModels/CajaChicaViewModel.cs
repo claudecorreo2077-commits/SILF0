@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\CajaChicaViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\CajaChicaViewModel.cs
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;

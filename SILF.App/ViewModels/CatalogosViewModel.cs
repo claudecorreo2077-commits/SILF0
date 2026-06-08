@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\CatalogosViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\CatalogosViewModel.cs
 using CommunityToolkit.Mvvm.Input;
 
 namespace SILF.App.ViewModels;

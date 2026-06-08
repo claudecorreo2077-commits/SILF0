@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\MainWindow.xaml.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\MainWindow.xaml.cs
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,7 +13,11 @@ namespace SILF.App.Views;
 public partial class MainWindow : Window
 {
     private bool _sidebarExpanded = true;
-    private bool _isDarkMode = false; // ← CLARO por defecto
+    private bool _isDarkMode = false; // CLARO por defecto
+
+    // URI del diccionario de paleta oscura. Se carga/descarga dinámicamente.
+    private static readonly Uri DarkPaletteUri =
+        new("/Themes/SilfPalette.Dark.xaml", UriKind.Relative);
 
     public MainWindow()
     {
@@ -22,7 +26,7 @@ public partial class MainWindow : Window
         MaxHeight = SystemParameters.MaximizedPrimaryScreenHeight;
         MaxWidth = SystemParameters.MaximizedPrimaryScreenWidth;
 
-        Loaded += (_, _) => ApplyTheme(); // ← Aplicar tema claro al cargar
+        Loaded += (_, _) => ApplyTheme();
     }
 
     private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -68,69 +72,86 @@ public partial class MainWindow : Window
         ApplyTheme();
     }
 
+    /// <summary>
+    /// Aplica el tema actual. Hace dos cosas:
+    ///   1. Cambia el BaseTheme de MaterialDesign (afecta DataGrid, ComboBox, etc).
+    ///   2. Sobrescribe los tokens SILF cargando/descargando SilfPalette.Dark.xaml
+    ///      en Application.Resources.MergedDictionaries.
+    /// </summary>
     private void ApplyTheme()
     {
+        // ── 1. MaterialDesign theme ──
         var ph = new PaletteHelper();
         var t = ph.GetTheme();
         t.SetBaseTheme(_isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
         ph.SetTheme(t);
 
+        // ── 2. Swap de paleta SILF: agregar o quitar SilfPalette.Dark.xaml ──
+        SwapPaletaSilf(_isDarkMode);
+
+        // ── 3. Ajustar Background del Window. Alineado a la nueva escala:
+        //      el marco/ventana es el nivel más profundo (SilfBgWindow),
+        //      apenas por debajo del sidebar, para que el contenido "flote". ──
+        if (_isDarkMode)
+        {
+            // Gradiente sutil entre Window (#101015) y un punto apenas más claro (#16161D)
+            WindowBorder.Background = new LinearGradientBrush(
+                Color.FromRgb(0x10, 0x10, 0x15),   // #101015  (SilfBgWindow)
+                Color.FromRgb(0x16, 0x16, 0x1D),   // #16161D  (= SilfBgSidebar)
+                new Point(0, 0), new Point(1, 1));
+        }
+        else
+        {
+            // Modo claro: fondo sólido (lo que ya tenías)
+            WindowBorder.Background = B("#F0F2F8");
+        }
+
+        // ── 4. Actualizar el icono y texto del botón de tema ──
         var themeIcon = BtnTheme.Template.FindName("ThemeIcon", BtnTheme) as PackIcon;
         var themeText = BtnTheme.Template.FindName("ThemeText", BtnTheme) as TextBlock;
 
         if (_isDarkMode)
         {
-            WindowBorder.Background = new LinearGradientBrush(
-                Color.FromRgb(6, 5, 49), Color.FromRgb(27, 20, 72),
-                new Point(0, 1), new Point(1, 0));
-            WindowBorder.BorderBrush = B("#2A2060");
-            NavPanel.Background = B("#0C0A28");
-            ContentArea.Background = new SolidColorBrush(Color.FromArgb(25, 255, 255, 255));
-            TxtTitleSilf.Foreground = Brushes.White;
-            TxtModulo.Foreground = Brushes.White;
-
-            Resources["MenuHoverBrush"]  = new SolidColorBrush(Color.FromArgb(0x18, 255, 255, 255));
-            Resources["MenuSelectedBg"]  = B("#F0F0F0");
-            Resources["MenuSelectedFg"]  = B("#1B1448");
-            Resources["MenuForeground"]  = B("#90A4AE");
-            Resources["MenuSeparator"]   = new SolidColorBrush(Color.FromArgb(0x15, 255, 255, 255));
-            Resources["ExtensionBg"]     = B("#161240");
-            Resources["ExtensionFg"]     = Brushes.White;
-            Resources["SidebarTitle"]    = Brushes.White;
-            Resources["InputBg"]         = new SolidColorBrush(Color.FromArgb(0x10, 255, 255, 255));
-            Resources["InputBorder"]     = new SolidColorBrush(Color.FromArgb(0x30, 255, 255, 255));
-            Resources["InputFg"]         = Brushes.White;
-            Resources["PanelBorder"]     = new SolidColorBrush(Color.FromArgb(0x15, 255, 255, 255));
-            Resources["CardBg"]          = new SolidColorBrush(Color.FromArgb(0x0A, 255, 255, 255));
-
             if (themeIcon != null) { themeIcon.Kind = PackIconKind.WeatherNight; themeIcon.Foreground = B("#FFD54F"); }
             if (themeText != null) themeText.Text = "Oscuro";
         }
         else
         {
-            WindowBorder.Background = B("#F0F2F8");
-            WindowBorder.BorderBrush = B("#C8CDD7");
-            NavPanel.Background = B("#FFFFFF");
-            ContentArea.Background = B("#F8F9FC");
-            TxtTitleSilf.Foreground = B("#1E1E3E");
-            TxtModulo.Foreground = B("#1E1E3E");
-
-            Resources["MenuHoverBrush"]  = B("#E8EAF0");
-            Resources["MenuSelectedBg"]  = B("#462AD8");
-            Resources["MenuSelectedFg"]  = Brushes.White;
-            Resources["MenuForeground"]  = B("#5A5E72");
-            Resources["MenuSeparator"]   = B("#E0E2E8");
-            Resources["ExtensionBg"]     = B("#FFFFFF");
-            Resources["ExtensionFg"]     = B("#1E1E3E");
-            Resources["SidebarTitle"]    = B("#1E1E3E");
-            Resources["InputBg"]         = B("#F5F6FA");
-            Resources["InputBorder"]     = B("#C8CDD7");
-            Resources["InputFg"]         = B("#1E1E3E");
-            Resources["PanelBorder"]     = B("#D8DCE6");
-            Resources["CardBg"]          = Brushes.White;
-
             if (themeIcon != null) { themeIcon.Kind = PackIconKind.WhiteBalanceSunny; themeIcon.Foreground = B("#FF9800"); }
             if (themeText != null) themeText.Text = "Claro";
+        }
+    }
+
+    /// <summary>
+    /// Carga/descarga SilfPalette.Dark.xaml en Application.Resources.MergedDictionaries.
+    /// Cuando está cargado, sobreescribe las claves de SilfTokens.xaml con los
+    /// valores oscuros. Al descargarlo, vuelven a aplicarse los valores claros.
+    /// </summary>
+    private static void SwapPaletaSilf(bool dark)
+    {
+        var dicts = Application.Current.Resources.MergedDictionaries;
+
+        // Buscar si ya está cargado el dark palette
+        ResourceDictionary? darkDict = null;
+        foreach (var d in dicts)
+        {
+            if (d.Source != null && d.Source.OriginalString.EndsWith(
+                "SilfPalette.Dark.xaml", StringComparison.OrdinalIgnoreCase))
+            {
+                darkDict = d;
+                break;
+            }
+        }
+
+        if (dark && darkDict == null)
+        {
+            // Activar oscuro: agregar el diccionario
+            dicts.Add(new ResourceDictionary { Source = DarkPaletteUri });
+        }
+        else if (!dark && darkDict != null)
+        {
+            // Volver a claro: quitar el diccionario (los tokens vuelven al default)
+            dicts.Remove(darkDict);
         }
     }
 

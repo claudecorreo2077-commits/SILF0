@@ -1,5 +1,15 @@
-<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\App.xaml -->
+﻿<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\App.xaml -->
 <Application x:Class="SILF.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Sistema de tokens SILF (valores por defecto = modo claro).
+                     El modo oscuro se aplica cargando SilfPalette.Dark.xaml
+                     desde MainWindow.xaml.cs. -->
+                <ResourceDictionary Source="/Themes/SilfTokens.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\EmpresaViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\EmpresaViewModel.cs
 using System.Diagnostics;
 using System.IO;
 using System.Windows;

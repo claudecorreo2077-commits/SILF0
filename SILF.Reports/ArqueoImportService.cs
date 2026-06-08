@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\ArqueoImportService.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\ArqueoImportService.cs
 using System.Text.Json;
 using SILF.Core.Helpers;
 

@@ -1,4 +1,4 @@
-using SILF.Core.Models;
+﻿using SILF.Core.Models;
 using SILF.Core.Enums;
 
 namespace SILF.App.ViewModels;

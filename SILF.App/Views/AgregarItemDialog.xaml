@@ -1,4 +1,4 @@
-<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\AgregarItemDialog.xaml -->
+﻿<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\AgregarItemDialog.xaml -->
 <Window x:Class="SILF.App.Views.AgregarItemDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"

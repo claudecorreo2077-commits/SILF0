@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\UsuariosView.xaml.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\UsuariosView.xaml.cs
 using System.Windows.Controls;
 
 namespace SILF.App.Views;

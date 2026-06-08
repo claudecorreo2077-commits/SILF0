@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\ProveedorSugerencia.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\ProveedorSugerencia.cs
 namespace SILF.App.ViewModels;
 
 /// <summary>

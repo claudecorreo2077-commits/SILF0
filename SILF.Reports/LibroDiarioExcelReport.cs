@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\LibroDiarioExcelReport.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\LibroDiarioExcelReport.cs
 using ClosedXML.Excel;
 
 namespace SILF.Reports;

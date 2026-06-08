@@ -1,4 +1,4 @@
-<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\InicioView.xaml -->
+﻿<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\InicioView.xaml -->
 <UserControl x:Class="SILF.App.Views.InicioView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"

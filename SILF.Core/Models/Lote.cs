@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using SILF.Core.Enums;
 
@@ -6,9 +6,14 @@ namespace SILF.Core.Models;
 
 /// <summary>
 /// Lote de mineral. Entidad central del sistema.
-/// Cada lote pertenece a un Proceso de Flotación y pasa por 6 estados:
+/// Pasa por 6 estados:
 /// Registrado → AnticipoPagado → EnLaboratorio → LeyesRegistradas → Liquidado → Completado.
 /// Cada lote genera 1 Liquidación y 1 Flotación (simultáneas).
+///
+/// FLOTACIÓN MANUAL: el lote NO nace dentro de una flotación. Una vez liquidado
+/// queda "disponible" (ProcesoFlotacionId = null) y se agrupa manualmente en una
+/// flotación desde el módulo Inv. Flotación. Eliminar una flotación devuelve sus
+/// lotes a null (disponibles) sin borrar nada más.
 /// </summary>
 public class Lote
 {
@@ -19,9 +24,8 @@ public class Lote
     public string? Ticket { get; set; }
 
     /// <summary>
-    /// Número de lote correlativo DENTRO del proceso de flotación.
-    /// Se reinicia desde 1 con cada nuevo proceso (botón FLOTAR).
-    /// El identificador único del lote es (NumeroProceso, NumeroLote).
+    /// Número de lote CORRELATIVO GLOBAL (1, 2, 3...), fijo de por vida.
+    /// Se asigna al registrar el lote y no cambia, independientemente de las flotaciones.
     /// </summary>
     public int NumeroLote { get; set; }
 
@@ -86,9 +90,12 @@ public class Lote
     public int MinaId { get; set; }
     public Mina Mina { get; set; } = null!;
 
-    /// <summary>FK al Proceso de Flotación al que pertenece este lote.</summary>
-    public int ProcesoFlotacionId { get; set; }
-    public ProcesoFlotacion ProcesoFlotacion { get; set; } = null!;
+    /// <summary>
+    /// FK a la Flotación (ProcesoFlotacion) que agrupa este lote.
+    /// NULL = lote disponible, aún no agrupado en ninguna flotación.
+    /// </summary>
+    public int? ProcesoFlotacionId { get; set; }
+    public ProcesoFlotacion? ProcesoFlotacion { get; set; }
 
     // ── Navegación 1:1 ──
     public Liquidacion? Liquidacion { get; set; }

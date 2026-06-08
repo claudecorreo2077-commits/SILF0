@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\App.xaml.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\App.xaml.cs
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;

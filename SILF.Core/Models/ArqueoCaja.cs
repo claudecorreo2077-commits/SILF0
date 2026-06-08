@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Models\ArqueoCaja.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Models\ArqueoCaja.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

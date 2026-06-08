@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\LiquidacionExcelReport.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\LiquidacionExcelReport.cs
 using ClosedXML.Excel;
 
 namespace SILF.Reports;

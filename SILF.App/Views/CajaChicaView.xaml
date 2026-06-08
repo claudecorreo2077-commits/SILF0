@@ -1,4 +1,4 @@
-<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\CajaChicaView.xaml -->
+﻿<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\CajaChicaView.xaml -->
 <UserControl x:Class="SILF.App.Views.CajaChicaView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,7 +7,8 @@
              xmlns:vm="clr-namespace:SILF.App.ViewModels"
              d:DataContext="{d:DesignInstance vm:CajaChicaViewModel}"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d">
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+             TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>

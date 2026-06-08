@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\LoginView.xaml.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\LoginView.xaml.cs
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;

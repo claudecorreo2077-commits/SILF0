@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\LoteFormView.xaml.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\LoteFormView.xaml.cs
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

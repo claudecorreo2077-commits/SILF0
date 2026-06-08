@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Models\Liquidacion.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Models\Liquidacion.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

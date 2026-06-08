@@ -1,4 +1,4 @@
-namespace SILF.Core.Enums;
+﻿namespace SILF.Core.Enums;
 
 /// <summary>
 /// Roles del sistema.

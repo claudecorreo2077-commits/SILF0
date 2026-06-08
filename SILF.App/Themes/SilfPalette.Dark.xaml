@@ -1,0 +1,107 @@
+﻿<!--
+    ════════════════════════════════════════════════════════════════
+    SilfPalette.Dark.xaml
+    ════════════════════════════════════════════════════════════════
+    Override de SilfTokens.xaml para el MODO OSCURO refinado.
+
+    CAMBIO CLAVE (v2): escala de elevación SEPARADA.
+    Antes los grises estaban comprimidos (sidebar y contenido diferían
+    en 1 solo nivel de brillo). Ahora cada superficie sube ~8-10 niveles
+    sobre la anterior, creando profundidad real sin usar negro:
+
+        Window  #101015  (deepest)
+          └ Sidebar  #16161D
+              └ Content  #1C1C25
+                  └ Card / fila  #25252F
+                      └ Input  #2C2C38
+                          └ Hover  #35353F
+
+    Texto primario suavizado a #F0F0F4 (no #FFFFFF puro) para evitar
+    halation sobre fondos oscuros. Sigue cumpliendo WCAG AA holgado.
+
+    Se carga DINÁMICAMENTE desde MainWindow.xaml.cs al activar oscuro.
+
+    Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Themes\SilfPalette.Dark.xaml
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  FONDOS — escala de elevación separada       -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfBgWindow"      Color="#101015"/>
+    <SolidColorBrush x:Key="SilfBgSidebar"     Color="#16161D"/>
+    <SolidColorBrush x:Key="SilfBgContent"     Color="#1C1C25"/>
+    <SolidColorBrush x:Key="SilfBgCard"        Color="#25252F"/>
+    <SolidColorBrush x:Key="SilfBgInput"       Color="#2C2C38"/>
+    <SolidColorBrush x:Key="SilfBgHover"       Color="#35353F"/>
+    <SolidColorBrush x:Key="SilfBgSelected"    Color="#272340"/>   <!-- tinte indigo: "activo" se distingue del hover neutro -->
+    <SolidColorBrush x:Key="SilfBgTooltip"     Color="#2C2C38"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  TEXTO — alto contraste, sin blanco puro     -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfTextPrimary"          Color="#F0F0F4"/>
+    <SolidColorBrush x:Key="SilfTextSecondary"        Color="#C5C7D0"/>
+    <SolidColorBrush x:Key="SilfTextMuted"            Color="#8B8D98"/>
+    <SolidColorBrush x:Key="SilfTextOnAccent"         Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SilfTextOnSelected"       Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SilfTitleBarFg"           Color="#F0F0F4"/>
+    <SolidColorBrush x:Key="SilfModuleFg"             Color="#F0F0F4"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  SIDEBAR                                    -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfSidebarFg"            Color="#C5C7D0"/>
+    <SolidColorBrush x:Key="SilfSidebarFgActive"      Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SilfSidebarTitle"         Color="#F0F0F4"/>
+    <SolidColorBrush x:Key="SilfSidebarDivider"       Color="#2C2C36"/>
+    <SolidColorBrush x:Key="SilfTooltipFg"            Color="#F0F0F4"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  BORDES                                     -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfBorderWindow"   Color="#2E2E38"/>
+    <SolidColorBrush x:Key="SilfBorderInput"    Color="#3A3A46"/>
+    <SolidColorBrush x:Key="SilfBorderPanel"    Color="#2E2E38"/>
+    <SolidColorBrush x:Key="SilfBorderSubtle"   Color="#26262E"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  ACENTOS DE MARCA — se mantienen           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfAccentPrimary"    Color="#DA34AE"/>
+    <SolidColorBrush x:Key="SilfAccentSecondary"  Color="#7B5FFF"/>
+    <SolidColorBrush x:Key="SilfAccentLogoBg"     Color="#462AD8"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  ESTADOS — tonos suaves, no saturados      -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfSuccess"  Color="#66BB6A"/>
+    <SolidColorBrush x:Key="SilfDanger"   Color="#EF5350"/>
+    <SolidColorBrush x:Key="SilfWarning"  Color="#FFB74D"/>
+    <SolidColorBrush x:Key="SilfInfo"     Color="#64B5F6"/>
+
+    <!-- Fondos sutiles para chips/badges -->
+    <SolidColorBrush x:Key="SilfSuccessBg" Color="#1B3A1E"/>
+    <SolidColorBrush x:Key="SilfDangerBg"  Color="#3D1F1F"/>
+    <SolidColorBrush x:Key="SilfWarningBg" Color="#3D2F1A"/>
+    <SolidColorBrush x:Key="SilfInfoBg"    Color="#1A2F47"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  COMPATIBILIDAD: claves antiguas             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="MenuHoverBrush"   Color="#35353F"/>
+    <SolidColorBrush x:Key="MenuSelectedBg"   Color="#272340"/>
+    <SolidColorBrush x:Key="MenuSelectedFg"   Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="MenuForeground"   Color="#C5C7D0"/>
+    <SolidColorBrush x:Key="MenuSeparator"    Color="#2C2C36"/>
+    <SolidColorBrush x:Key="ExtensionBg"      Color="#2C2C38"/>
+    <SolidColorBrush x:Key="ExtensionFg"      Color="#F0F0F4"/>
+    <SolidColorBrush x:Key="SidebarTitle"     Color="#F0F0F4"/>
+    <SolidColorBrush x:Key="InputBg"          Color="#2C2C38"/>
+    <SolidColorBrush x:Key="InputBorder"      Color="#3A3A46"/>
+    <SolidColorBrush x:Key="InputFg"          Color="#F0F0F4"/>
+    <SolidColorBrush x:Key="PanelBorder"      Color="#2E2E38"/>
+    <SolidColorBrush x:Key="CardBg"           Color="#25252F"/>
+
+</ResourceDictionary>

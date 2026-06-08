@@ -1,0 +1,106 @@
+﻿<!--
+    ════════════════════════════════════════════════════════════════
+    SilfTokens.xaml
+    ════════════════════════════════════════════════════════════════
+    Sistema de tokens semánticos para temas SILF.
+
+    Cada token tiene aquí su valor DEFAULT (= modo claro). El modo
+    oscuro se aplica cargando SilfPalette.Dark.xaml ENCIMA, lo cual
+    sobreescribe estos brushes.
+
+    Convención de nombres:
+      Silf{Categoría}{Modificador}
+
+      Bg*       → Backgrounds (fondos)
+      Text*     → Foreground de texto
+      Border*   → Bordes y separadores
+      Accent*   → Colores de marca (rosa y azul SILF)
+      State*    → Verde/rojo/azul/naranja para estados
+      Sidebar*  → Específicos del sidebar
+
+    Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Themes\SilfTokens.xaml
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  FONDOS                                     -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfBgWindow"      Color="#F0F2F8"/>
+    <SolidColorBrush x:Key="SilfBgContent"     Color="#F8F9FC"/>
+    <SolidColorBrush x:Key="SilfBgSidebar"     Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SilfBgCard"        Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SilfBgInput"       Color="#F5F6FA"/>
+    <SolidColorBrush x:Key="SilfBgHover"       Color="#E8EAF0"/>
+    <SolidColorBrush x:Key="SilfBgSelected"    Color="#462AD8"/>
+    <SolidColorBrush x:Key="SilfBgTooltip"     Color="#FFFFFF"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  TEXTO                                      -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfTextPrimary"          Color="#1E1E3E"/>
+    <SolidColorBrush x:Key="SilfTextSecondary"        Color="#5A5E72"/>
+    <SolidColorBrush x:Key="SilfTextMuted"            Color="#8A8E9E"/>
+    <SolidColorBrush x:Key="SilfTextOnAccent"         Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SilfTextOnSelected"       Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SilfTitleBarFg"           Color="#1E1E3E"/>
+    <SolidColorBrush x:Key="SilfModuleFg"             Color="#1E1E3E"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  SIDEBAR                                    -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfSidebarFg"            Color="#5A5E72"/>
+    <SolidColorBrush x:Key="SilfSidebarFgActive"      Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SilfSidebarTitle"         Color="#1E1E3E"/>
+    <SolidColorBrush x:Key="SilfSidebarDivider"       Color="#E0E2E8"/>
+    <SolidColorBrush x:Key="SilfTooltipFg"            Color="#1E1E3E"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  BORDES                                     -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfBorderWindow"   Color="#C8CDD7"/>
+    <SolidColorBrush x:Key="SilfBorderInput"    Color="#C8CDD7"/>
+    <SolidColorBrush x:Key="SilfBorderPanel"    Color="#D8DCE6"/>
+    <SolidColorBrush x:Key="SilfBorderSubtle"   Color="#E0E2E8"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  ACENTOS DE MARCA                           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfAccentPrimary"    Color="#DA34AE"/>   <!-- Rosa SILF -->
+    <SolidColorBrush x:Key="SilfAccentSecondary"  Color="#462AD8"/>   <!-- Azul SILF -->
+    <SolidColorBrush x:Key="SilfAccentLogoBg"     Color="#462AD8"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  ESTADOS                                    -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="SilfSuccess"  Color="#2E7D32"/>
+    <SolidColorBrush x:Key="SilfDanger"   Color="#D32F2F"/>
+    <SolidColorBrush x:Key="SilfWarning"  Color="#F57C00"/>
+    <SolidColorBrush x:Key="SilfInfo"     Color="#1565C0"/>
+
+    <!-- Fondos suaves para chips/badges de estado -->
+    <SolidColorBrush x:Key="SilfSuccessBg" Color="#E8F5E9"/>
+    <SolidColorBrush x:Key="SilfDangerBg"  Color="#FFEBEE"/>
+    <SolidColorBrush x:Key="SilfWarningBg" Color="#FFF3E0"/>
+    <SolidColorBrush x:Key="SilfInfoBg"    Color="#E3F2FD"/>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  COMPATIBILIDAD HACIA ATRÁS                 -->
+    <!--  Mantenemos los nombres viejos que MainWindow.xaml usa,    -->
+    <!--  apuntando al nuevo token. Permite migración gradual.      -->
+    <!-- ═══════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="MenuHoverBrush"   Color="#E8EAF0"/>
+    <SolidColorBrush x:Key="MenuSelectedBg"   Color="#462AD8"/>
+    <SolidColorBrush x:Key="MenuSelectedFg"   Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="MenuForeground"   Color="#5A5E72"/>
+    <SolidColorBrush x:Key="MenuSeparator"    Color="#E0E2E8"/>
+    <SolidColorBrush x:Key="ExtensionBg"      Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ExtensionFg"      Color="#1E1E3E"/>
+    <SolidColorBrush x:Key="SidebarTitle"     Color="#1E1E3E"/>
+    <SolidColorBrush x:Key="InputBg"          Color="#F5F6FA"/>
+    <SolidColorBrush x:Key="InputBorder"      Color="#C8CDD7"/>
+    <SolidColorBrush x:Key="InputFg"          Color="#1E1E3E"/>
+    <SolidColorBrush x:Key="PanelBorder"      Color="#D8DCE6"/>
+    <SolidColorBrush x:Key="CardBg"           Color="#FFFFFF"/>
+
+</ResourceDictionary>

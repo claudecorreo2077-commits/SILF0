@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\FlotacionViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\FlotacionViewModel.cs
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -19,6 +19,13 @@ namespace SILF.App.ViewModels;
 
 public partial class FlotacionViewModel : BaseViewModel
 {
+    // ── Pool: liquidaciones disponibles (liquidadas, sin flotación) ──
+    public ObservableCollection<LiquidacionDisponible> Disponibles { get; } = new();
+
+    // ── Flotaciones ya creadas (resumen + acción eliminar) ──
+    public ObservableCollection<FlotacionResumen> Flotaciones { get; } = new();
+
+    // ── Detalle consolidado de lotes ya flotados (tabla + Excel) ──
     public ObservableCollection<FlotacionRegistro> Registros { get; } = new();
     public ICollectionView RegistrosView { get; }
 
@@ -29,12 +36,16 @@ public partial class FlotacionViewModel : BaseViewModel
     public ObservableCollection<string> FiltrosProceso { get; } = new() { "Todos" };
     public ObservableCollection<string> FiltrosMina { get; } = new() { "Todos" };
 
-    // ── Proceso actual (banda informativa + botón FLOTAR) ──
-    [ObservableProperty] private int _numeroProcesoActual;
-    [ObservableProperty] private DateTime _fechaAperturaProceso;
-    [ObservableProperty] private string _indicadorProcesoTexto = "Cargando...";
+    // ── Resumen general (banda superior) ──
+    [ObservableProperty] private string _resumenTexto = "Cargando...";
+    [ObservableProperty] private int _cantidadFlotaciones;
+    [ObservableProperty] private int _cantidadDisponibles;
 
-    // ── Totales ──
+    // ── Selección del pool ──
+    [ObservableProperty] private int _seleccionadasCount;
+    [ObservableProperty] private decimal _seleccionadasTotal;
+
+    // ── Totales del detalle ──
     [ObservableProperty] private decimal _totalValorComercial;
     [ObservableProperty] private decimal _totalDeducciones;
     [ObservableProperty] private decimal _totalBonoTransporte;
@@ -75,99 +86,148 @@ public partial class FlotacionViewModel : BaseViewModel
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
 
-            // ── 1) Proceso activo (banda informativa) ──
-            var procesoActivo = await db.ProcesosFlotacion
-                .Where(p => p.Estado == EstadoProcesoFlotacion.Abierto)
-                .OrderByDescending(p => p.NumeroProceso)
-                .FirstOrDefaultAsync();
+            // ── 1) POOL: liquidaciones disponibles (liquidadas, sin flotación) ──
+            var disp = await db.Lotes
+                .Include(l => l.Proveedor).ThenInclude(p => p.Cooperativa)
+                .Include(l => l.Mina)
+                .Include(l => l.Liquidacion)
+                .Where(l => l.Visible && l.Liquidacion != null && l.ProcesoFlotacionId == null)
+                .OrderBy(l => l.NumeroLote)
+                .ToListAsync();
 
-            if (procesoActivo != null)
+            Disponibles.Clear();
+            foreach (var l in disp)
             {
-                NumeroProcesoActual = procesoActivo.NumeroProceso;
-                FechaAperturaProceso = procesoActivo.FechaApertura;
-                var cantLotes = await db.Lotes.CountAsync(l => l.ProcesoFlotacionId == procesoActivo.Id);
-                IndicadorProcesoTexto =
-                    $"Proceso #{procesoActivo.NumeroProceso} ABIERTO  ·  Desde {procesoActivo.FechaApertura:dd/MM/yyyy HH:mm}  ·  {cantLotes} lote{(cantLotes == 1 ? "" : "s")} cargado{(cantLotes == 1 ? "" : "s")}";
+                var d = new LiquidacionDisponible
+                {
+                    LoteId = l.Id,
+                    NumeroLote = l.NumeroLote,
+                    Proveedor = l.Proveedor.NombreCompleto,
+                    Cooperativa = l.Proveedor.Cooperativa?.Nombre ?? "",
+                    Mina = l.Mina.Nombre,
+                    FechaLiquidacion = l.FechaLiquidacion ?? l.FechaRegistro,
+                    PesoNeto = l.PesoNeto,
+                    LiquidoPagable = l.Liquidacion!.LiquidoPagable
+                };
+                d.SelectionChanged = RecalcularSeleccion;
+                Disponibles.Add(d);
             }
-            else
-            {
-                IndicadorProcesoTexto = "⚠ Sin proceso abierto";
-            }
+            CantidadDisponibles = Disponibles.Count;
+            RecalcularSeleccion();
 
-            // ── 2) Lotes con liquidación (todos los procesos para el histórico) ──
-            var lotes = await db.Lotes
+            // ── 2) Lotes ya flotados (para resumen de flotaciones + detalle) ──
+            var flotados = await db.Lotes
                 .Include(l => l.Proveedor).ThenInclude(p => p.Cooperativa)
                 .Include(l => l.Mina)
                 .Include(l => l.Liquidacion)
                 .Include(l => l.BonoTransporte)
                 .Include(l => l.ProcesoFlotacion)
-                .Where(l => l.Visible && l.Liquidacion != null)
-                .OrderByDescending(l => l.ProcesoFlotacion.NumeroProceso)
-                .ThenBy(l => l.NumeroLote)
+                .Where(l => l.Visible && l.Liquidacion != null && l.ProcesoFlotacionId != null)
                 .ToListAsync();
 
+            // Agrupar por flotación, ordenadas de la más nueva a la más vieja
+            var grupos = flotados
+                .GroupBy(l => l.ProcesoFlotacionId!.Value)
+                .OrderByDescending(g => g.First().ProcesoFlotacion!.NumeroProceso)
+                .ToList();
+
+            // 2a) Resumen de flotaciones (tarjetas / lista con eliminar)
+            Flotaciones.Clear();
+            foreach (var g in grupos)
+            {
+                var first = g.First();
+                Flotaciones.Add(new FlotacionResumen
+                {
+                    ProcesoId = g.Key,
+                    NumeroProceso = first.ProcesoFlotacion!.NumeroProceso,
+                    Fecha = first.ProcesoFlotacion!.FechaApertura,
+                    CantidadLotes = g.Count(),
+                    TotalLiquidoPagable = g.Sum(x => x.Liquidacion!.LiquidoPagable)
+                });
+            }
+            CantidadFlotaciones = Flotaciones.Count;
+
+            // 2b) Detalle consolidado, con N° secuencial dentro de cada flotación
             var minas = new HashSet<string>();
             var procesos = new HashSet<string>();
 
             Registros.Clear();
-            foreach (var l in lotes)
+            foreach (var g in grupos)
             {
-                var liq = l.Liquidacion!;
-                var numProc = l.ProcesoFlotacion?.NumeroProceso ?? 0;
-                var procesoLabel = $"Proceso {numProc:D2}";
-
-                minas.Add(l.Mina.Nombre);
+                var numProc = g.First().ProcesoFlotacion!.NumeroProceso;
+                var procesoLabel = $"Flotación {numProc}";
                 procesos.Add(procesoLabel);
 
-                Registros.Add(new FlotacionRegistro
+                int seq = 1;
+                foreach (var l in g.OrderBy(x => x.NumeroLote))
                 {
-                    LoteId = l.Id,
-                    Proceso = numProc,
-                    ProcesoLabel = procesoLabel,
-                    NumeroEnProceso = l.NumeroLote,  // ahora ya está reseteado por proceso
-                    NumeroLote = l.NumeroLote,
-                    Ticket = l.Ticket ?? "",
-                    FechaIngreso = l.FechaRegistro,
-                    FechaLiquidacion = l.FechaLiquidacion ?? l.FechaRegistro,
-                    Cooperativa = l.Proveedor.Cooperativa?.Nombre ?? "",
-                    Mina = l.Mina.Nombre,
-                    Proveedor = l.Proveedor.NombreCompleto,
-                    Placa = l.Placa ?? "",
-                    PesoBruto = l.PesoBruto,
-                    Tara = l.Tara,
-                    PesoNeto = l.PesoNeto,
-                    LeyZn = l.LeyZn ?? 0, LeyAg = l.LeyAg ?? 0, LeyPb = l.LeyPb ?? 0,
-                    ValorComercial = liq.ValorComercialBs,
-                    Regalias = liq.Regalias,
-                    CNS = liq.CNS,
-                    COMIBOL = liq.COMIBOL,
-                    FENCOMIN = liq.FENCOMIN,
-                    FEDECOMIN = liq.FEDECOMIN,
-                    Cooperativa_Ded = liq.MontoCooperativa,
-                    IUE = liq.IUE,
-                    TotalDeducciones = liq.TotalDeducciones,
-                    BonoTransporte = l.BonoTransporte?.Monto ?? 0,
-                    LiquidoPagable = liq.LiquidoPagable,
-                    CostoLaboratorio = liq.CostoLaboratorio
-                });
+                    var liq = l.Liquidacion!;
+                    minas.Add(l.Mina.Nombre);
+
+                    Registros.Add(new FlotacionRegistro
+                    {
+                        LoteId = l.Id,
+                        Proceso = numProc,
+                        ProcesoLabel = procesoLabel,
+                        NumeroEnProceso = seq++,
+                        NumeroLote = l.NumeroLote,
+                        Ticket = l.Ticket ?? "",
+                        FechaIngreso = l.FechaRegistro,
+                        FechaLiquidacion = l.FechaLiquidacion ?? l.FechaRegistro,
+                        Cooperativa = l.Proveedor.Cooperativa?.Nombre ?? "",
+                        Mina = l.Mina.Nombre,
+                        Proveedor = l.Proveedor.NombreCompleto,
+                        Placa = l.Placa ?? "",
+                        PesoBruto = l.PesoBruto,
+                        Tara = l.Tara,
+                        PesoNeto = l.PesoNeto,
+                        LeyZn = l.LeyZn ?? 0, LeyAg = l.LeyAg ?? 0, LeyPb = l.LeyPb ?? 0,
+                        ValorComercial = liq.ValorComercialBs,
+                        Regalias = liq.Regalias,
+                        CNS = liq.CNS,
+                        COMIBOL = liq.COMIBOL,
+                        FENCOMIN = liq.FENCOMIN,
+                        FEDECOMIN = liq.FEDECOMIN,
+                        Cooperativa_Ded = liq.MontoCooperativa,
+                        IUE = liq.IUE,
+                        TotalDeducciones = liq.TotalDeducciones,
+                        BonoTransporte = l.BonoTransporte?.Monto ?? 0,
+                        LiquidoPagable = liq.LiquidoPagable,
+                        CostoLaboratorio = liq.CostoLaboratorio
+                    });
+                }
             }
 
             // Filtros
             FiltrosProceso.Clear();
             FiltrosProceso.Add("Todos");
             foreach (var p in procesos.OrderByDescending(p => p)) FiltrosProceso.Add(p);
+            if (!FiltrosProceso.Contains(FiltroProceso)) FiltroProceso = "Todos";
 
             FiltrosMina.Clear();
             FiltrosMina.Add("Todos");
             foreach (var m in minas.OrderBy(m => m)) FiltrosMina.Add(m);
+            if (!FiltrosMina.Contains(FiltroMina)) FiltroMina = "Todos";
 
+            RegistrosView.Refresh();
             CalcularTotales();
+
+            ResumenTexto =
+                $"{CantidadFlotaciones} flotaci{(CantidadFlotaciones == 1 ? "ón creada" : "ones creadas")}  ·  " +
+                $"{CantidadDisponibles} liquidaci{(CantidadDisponibles == 1 ? "ón disponible" : "ones disponibles")}";
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Error al cargar: {ex.Message}", "SILF", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { Cargando = false; }
+    }
+
+    private void RecalcularSeleccion()
+    {
+        var sel = Disponibles.Where(d => d.IsSelected).ToList();
+        SeleccionadasCount = sel.Count;
+        SeleccionadasTotal = sel.Sum(d => d.LiquidoPagable);
     }
 
     private void CalcularTotales()
@@ -182,65 +242,107 @@ public partial class FlotacionViewModel : BaseViewModel
     }
 
     // ══════════════════════════════════════════
-    // BOTÓN FLOTAR — corte manual del proceso
+    // CREAR FLOTACIÓN con las liquidaciones seleccionadas
     // ══════════════════════════════════════════
 
     [RelayCommand]
-    private async Task CortarProcesoAsync()
+    private async Task CrearFlotacionAsync()
     {
+        var sel = Disponibles.Where(d => d.IsSelected).ToList();
+        if (sel.Count == 0)
+        {
+            MessageBox.Show("Seleccioná al menos una liquidación para armar la flotación.",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var total = sel.Sum(s => s.LiquidoPagable);
+        var msg =
+            $"¿Crear una flotación con {sel.Count} liquidaci{(sel.Count == 1 ? "ón" : "ones")}?\n\n" +
+            $"Total Líquido Pagable: Bs {total:N2}";
+        if (MessageBox.Show(msg, "Crear Flotación",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+
         try
         {
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
 
-            var procesoActual = await db.ProcesosFlotacion
-                .Where(p => p.Estado == EstadoProcesoFlotacion.Abierto)
-                .OrderByDescending(p => p.NumeroProceso)
-                .FirstOrDefaultAsync();
+            var nuevoNum = (await db.ProcesosFlotacion.MaxAsync(p => (int?)p.NumeroProceso) ?? 0) + 1;
 
-            if (procesoActual == null)
+            var proc = new ProcesoFlotacion
             {
-                MessageBox.Show("No hay proceso de flotación abierto.", "SILF",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var cantLotes = await db.Lotes.CountAsync(l => l.ProcesoFlotacionId == procesoActual.Id);
-            var nuevoNumero = procesoActual.NumeroProceso + 1;
-
-            var mensaje =
-                $"¿Cerrar el Proceso #{procesoActual.NumeroProceso} y abrir el Proceso #{nuevoNumero}?\n\n" +
-                $"El proceso actual tiene {cantLotes} lote{(cantLotes == 1 ? "" : "s")}.\n" +
-                $"El correlativo de lote se reiniciará desde 1 para el nuevo proceso.\n\n" +
-                $"Esta acción no se puede deshacer.";
-
-            if (MessageBox.Show(mensaje, "FLOTAR — Cortar Proceso",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-
-            procesoActual.Estado = EstadoProcesoFlotacion.Cerrado;
-            procesoActual.FechaCierre = DateTime.Now;
-
-            var nuevo = new ProcesoFlotacion
-            {
-                NumeroProceso = nuevoNumero,
+                NumeroProceso = nuevoNum,
                 FechaApertura = DateTime.Now,
-                Estado = EstadoProcesoFlotacion.Abierto
+                FechaCierre = DateTime.Now,
+                Estado = EstadoProcesoFlotacion.Cerrado,
+                Observaciones = null
             };
-            db.ProcesosFlotacion.Add(nuevo);
+            db.ProcesosFlotacion.Add(proc);
+            await db.SaveChangesAsync();
 
+            var ids = sel.Select(s => s.LoteId).ToList();
+            var lotes = await db.Lotes.Where(l => ids.Contains(l.Id)).ToListAsync();
+            foreach (var l in lotes) l.ProcesoFlotacionId = proc.Id;
             await db.SaveChangesAsync();
 
             MessageBox.Show(
-                $"✓ Proceso #{procesoActual.NumeroProceso} cerrado.\n" +
-                $"✓ Proceso #{nuevoNumero} abierto.\n\n" +
-                $"Los nuevos lotes se registrarán en el Proceso #{nuevoNumero}.",
+                $"✓ Flotación {nuevoNum} creada con {sel.Count} liquidaci{(sel.Count == 1 ? "ón" : "ones")}.",
                 "SILF", MessageBoxButton.OK, MessageBoxImage.Information);
 
             await CargarDatosAsync();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al cortar proceso: {ex.InnerException?.Message ?? ex.Message}",
+            MessageBox.Show($"Error al crear la flotación: {ex.InnerException?.Message ?? ex.Message}",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    // ══════════════════════════════════════════
+    // ELIMINAR FLOTACIÓN — devuelve sus liquidaciones al pool
+    // ══════════════════════════════════════════
+
+    [RelayCommand]
+    private async Task EliminarFlotacionAsync(FlotacionResumen? f)
+    {
+        if (f == null) return;
+
+        var msg =
+            $"¿Eliminar la {f.Label}?\n\n" +
+            $"Sus {f.CantidadLotes} liquidaci{(f.CantidadLotes == 1 ? "ón volverá" : "ones volverán")} a quedar " +
+            $"disponibles para armar otra flotación.\n\n" +
+            $"NO se elimina ninguna liquidación.";
+        if (MessageBox.Show(msg, "Eliminar Flotación",
+                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+
+        try
+        {
+            using var scope = App.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+
+            // 1) Desvincular los lotes (vuelven al pool)
+            var lotes = await db.Lotes.Where(l => l.ProcesoFlotacionId == f.ProcesoId).ToListAsync();
+            foreach (var l in lotes) l.ProcesoFlotacionId = null;
+            await db.SaveChangesAsync();
+
+            // 2) Borrar el registro de flotación (ya sin lotes vinculados)
+            var proc = await db.ProcesosFlotacion.FirstOrDefaultAsync(p => p.Id == f.ProcesoId);
+            if (proc != null)
+            {
+                db.ProcesosFlotacion.Remove(proc);
+                await db.SaveChangesAsync();
+            }
+
+            MessageBox.Show(
+                $"✓ {f.Label} eliminada. {lotes.Count} liquidaci{(lotes.Count == 1 ? "ón disponible" : "ones disponibles")} nuevamente.",
+                "SILF", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            await CargarDatosAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al eliminar la flotación: {ex.InnerException?.Message ?? ex.Message}",
                 "SILF", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -286,6 +388,43 @@ public partial class FlotacionViewModel : BaseViewModel
     }
 }
 
+// ══════════════════════════════════════════
+// Liquidación disponible (pool, seleccionable con checkbox)
+// ══════════════════════════════════════════
+public partial class LiquidacionDisponible : ObservableObject
+{
+    public int LoteId { get; set; }
+    public int NumeroLote { get; set; }
+    public string Proveedor { get; set; } = "";
+    public string Cooperativa { get; set; } = "";
+    public string Mina { get; set; } = "";
+    public DateTime FechaLiquidacion { get; set; }
+    public decimal PesoNeto { get; set; }
+    public decimal LiquidoPagable { get; set; }
+
+    [ObservableProperty] private bool _isSelected;
+
+    /// <summary>Callback que el ViewModel engancha para recalcular el resumen de selección.</summary>
+    public Action? SelectionChanged;
+    partial void OnIsSelectedChanged(bool value) => SelectionChanged?.Invoke();
+}
+
+// ══════════════════════════════════════════
+// Resumen de una flotación creada (lista con eliminar)
+// ══════════════════════════════════════════
+public class FlotacionResumen
+{
+    public int ProcesoId { get; set; }
+    public int NumeroProceso { get; set; }
+    public string Label => $"Flotación {NumeroProceso}";
+    public DateTime Fecha { get; set; }
+    public int CantidadLotes { get; set; }
+    public decimal TotalLiquidoPagable { get; set; }
+}
+
+// ══════════════════════════════════════════
+// Fila del detalle consolidado
+// ══════════════════════════════════════════
 public class FlotacionRegistro
 {
     public int LoteId { get; set; }

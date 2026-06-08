@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LiquidacionListViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LiquidacionListViewModel.cs
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;

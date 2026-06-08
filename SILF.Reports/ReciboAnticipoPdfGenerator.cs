@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\ReciboAnticipoPdfGenerator.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\ReciboAnticipoPdfGenerator.cs
 using System.Globalization;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;

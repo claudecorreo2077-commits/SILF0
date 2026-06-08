@@ -1,4 +1,4 @@
-<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\CatalogosView.xaml -->
+﻿<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\CatalogosView.xaml -->
 <UserControl x:Class="SILF.App.Views.CatalogosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"

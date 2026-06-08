@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Behaviors\NumericInput.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Behaviors\NumericInput.cs
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;

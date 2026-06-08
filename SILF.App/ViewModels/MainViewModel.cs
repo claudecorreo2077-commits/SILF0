@@ -1,8 +1,11 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\MainViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\MainViewModel.cs
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SILF.Core.Enums;
+using SILF.Data;
 
 namespace SILF.App.ViewModels;
 
@@ -28,6 +31,7 @@ public partial class MainViewModel : BaseViewModel
     // Admin ve todo. Contador ve únicamente Inicio + Caja Chica.
     public Visibility VisibilidadLiquidacion => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
     public Visibility VisibilidadFlotacion   => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility VisibilidadConcentrados => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
     public Visibility VisibilidadReportes    => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
     public Visibility VisibilidadConfig      => _sesion.EsAdmin ? Visibility.Visible : Visibility.Collapsed;
 
@@ -54,12 +58,14 @@ public partial class MainViewModel : BaseViewModel
         {
             "NuevoLote" or "EditarLote" => "Lotes",
             "LiquidarLote" or "VerLiquidacion" => "Liquidación",
+            "NuevoConcentrado" or "EditarConcentrado" => "Concentrados",
             _ => modulo
         };
         ModuloSeleccionado = modulo switch
         {
             "NuevoLote" => "Nuevo Lote", "EditarLote" => "Editar Lote",
             "LiquidarLote" => "Liquidar Lote", "VerLiquidacion" => "Ver Liquidación",
+            "NuevoConcentrado" => "Nuevo Concentrado", "EditarConcentrado" => "Editar Concentrado",
             _ => modulo
         };
         IconoModulo = modulo switch
@@ -68,6 +74,7 @@ public partial class MainViewModel : BaseViewModel
             "Lotes" or "NuevoLote" or "EditarLote" => "PackageVariant",
             "Liquidación" or "LiquidarLote" or "VerLiquidacion" => "Calculator",
             "Flotación" => "Flask",
+            "Concentrados" or "NuevoConcentrado" or "EditarConcentrado" => "Cube",
             "Caja Chica" => "CashRegister", "Reportes" => "ChartBar",
             "Configuración" => "Cog", "Usuarios" => "AccountGroup",
             "Catálogos" => "BookOpenVariant", _ => "Home"
@@ -78,6 +85,8 @@ public partial class MainViewModel : BaseViewModel
             "EditarLote" => "SILF  ›  Lotes  ›  Editar",
             "LiquidarLote" => "SILF  ›  Liquidación  ›  Liquidar",
             "VerLiquidacion" => "SILF  ›  Liquidación  ›  Detalle",
+            "NuevoConcentrado" => "SILF  ›  Concentrados  ›  Nuevo",
+            "EditarConcentrado" => "SILF  ›  Concentrados  ›  Editar",
             _ => $"SILF  ›  {ModuloSeleccionado}"
         };
 
@@ -89,6 +98,7 @@ public partial class MainViewModel : BaseViewModel
             "NuevoLote"     => await CrearVistaFormularioLoteAsync(null),
             "Liquidación"   => await CrearVistaLiquidacionListAsync(),
             "Flotación"     => await CrearVistaFlotacionAsync(),
+            "Concentrados"  => await CrearVistaConcentradosAsync(),
             "Caja Chica"    => await CrearVistaCajaChicaAsync(),
             "Reportes"      => await CrearVistaReportesAsync(),
             "Configuración" => await CrearVistaEmpresaAsync(),
@@ -128,6 +138,46 @@ public partial class MainViewModel : BaseViewModel
         };
         await vm.CargarReciboAsync(reciboId);
         VistaActual = new Views.ReciboPreviewView { DataContext = vm };
+        CargandoVista = false;
+    }
+
+    // ── Navegación de Concentrados (formulario nuevo / edición) ──
+    public async Task NavegarANuevoConcentradoAsync(TipoConcentrado tipo)
+    {
+        SidebarActivo = "Concentrados"; ModuloSeleccionado = "Nuevo Concentrado";
+        IconoModulo = "Cube"; Breadcrumb = "SILF  ›  Concentrados  ›  Nuevo";
+        CargandoVista = true; await Task.Delay(100);
+        var vm = new ConcentradoFormViewModel(tipo)
+        {
+            OnGuardado = async () => await NavegarAsync("Concentrados"),
+            OnCancelado = async () => await NavegarAsync("Concentrados")
+        };
+        await vm.InicializarNuevoAsync();
+        VistaActual = new Views.ConcentradoFormView { DataContext = vm };
+        CargandoVista = false;
+    }
+
+    public async Task NavegarAEditarConcentradoAsync(int id)
+    {
+        SidebarActivo = "Concentrados"; ModuloSeleccionado = "Editar Concentrado";
+        IconoModulo = "Cube"; Breadcrumb = "SILF  ›  Concentrados  ›  Editar";
+        CargandoVista = true; await Task.Delay(100);
+
+        // El tipo se necesita antes de construir el VM (define los campos visibles).
+        TipoConcentrado tipo;
+        using (var scope = App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
+            tipo = await db.Concentrados.Where(c => c.Id == id).Select(c => c.Tipo).FirstAsync();
+        }
+
+        var vm = new ConcentradoFormViewModel(tipo)
+        {
+            OnGuardado = async () => await NavegarAsync("Concentrados"),
+            OnCancelado = async () => await NavegarAsync("Concentrados")
+        };
+        await vm.CargarParaEditarAsync(id);
+        VistaActual = new Views.ConcentradoFormView { DataContext = vm };
         CargandoVista = false;
     }
 
@@ -175,6 +225,17 @@ public partial class MainViewModel : BaseViewModel
     {
         var vm = new FlotacionViewModel();
         var vista = new Views.FlotacionView { DataContext = vm };
+        await vm.CargarDatosCommand.ExecuteAsync(null); return vista;
+    }
+
+    private async Task<Views.ConcentradosListView> CrearVistaConcentradosAsync()
+    {
+        var vm = new ConcentradosListViewModel
+        {
+            NavegarANuevo = async (tipo) => await NavegarANuevoConcentradoAsync(tipo),
+            NavegarAEditar = async (id) => await NavegarAEditarConcentradoAsync(id)
+        };
+        var vista = new Views.ConcentradosListView { DataContext = vm };
         await vm.CargarDatosCommand.ExecuteAsync(null); return vista;
     }
 

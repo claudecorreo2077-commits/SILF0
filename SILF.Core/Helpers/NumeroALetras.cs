@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Helpers\NumeroALetras.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Helpers\NumeroALetras.cs
 namespace SILF.Core.Helpers;
 
 /// <summary>

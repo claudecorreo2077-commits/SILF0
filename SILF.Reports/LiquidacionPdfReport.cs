@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\LiquidacionPdfReport.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\LiquidacionPdfReport.cs
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;

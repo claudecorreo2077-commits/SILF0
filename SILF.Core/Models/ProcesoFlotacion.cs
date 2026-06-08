@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Models\ProcesoFlotacion.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Models\ProcesoFlotacion.cs
 using System.ComponentModel.DataAnnotations;
 using SILF.Core.Enums;
 

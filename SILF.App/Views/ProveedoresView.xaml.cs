@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\ProveedoresView.xaml.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\ProveedoresView.xaml.cs
 using System.Windows.Controls;
 using System.Windows.Input;
 

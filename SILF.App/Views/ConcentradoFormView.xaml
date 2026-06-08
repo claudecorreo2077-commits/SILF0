@@ -1,0 +1,347 @@
+﻿<!-- Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\ConcentradoFormView.xaml -->
+<UserControl x:Class="SILF.App.Views.ConcentradoFormView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:b="clr-namespace:SILF.App.Behaviors"
+             xmlns:conv="clr-namespace:SILF.App.Converters"
+             FontFamily="Segoe UI"
+             TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:RequiredFieldConverter x:Key="Req"/>
+        <conv:PercentInputConverter x:Key="Pct"/>
+
+        <Style x:Key="Sec" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Montserrat"/><Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style x:Key="FL" TargetType="TextBlock"><Setter Property="FontSize" Value="11"/><Setter Property="Opacity" Value="0.6"/><Setter Property="Margin" Value="0,0,0,3"/></Style>
+        <Style x:Key="FI" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}"><Setter Property="FontSize" Value="13"/><Setter Property="Margin" Value="0,0,10,10"/></Style>
+        <Style x:Key="NUM" TargetType="TextBox" BasedOn="{StaticResource FI}"><Setter Property="b:NumericInput.IsEnabled" Value="True"/><Setter Property="HorizontalContentAlignment" Value="Right"/></Style>
+        <Style x:Key="CLbl" TargetType="TextBlock"><Setter Property="FontSize" Value="12.5"/><Setter Property="Opacity" Value="0.85"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+        <Style x:Key="CVal" TargetType="TextBlock"><Setter Property="FontSize" Value="12.5"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="HorizontalAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+        <Style x:Key="Chk" TargetType="CheckBox"><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}"/></Style>
+        <Style x:Key="Rate" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}"><Setter Property="FontSize" Value="12"/><Setter Property="HorizontalContentAlignment" Value="Right"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Margin" Value="0"/></Style>
+        <Style x:Key="CardBox" TargetType="materialDesign:Card"><Setter Property="Padding" Value="18,14,18,16"/><Setter Property="UniformCornerRadius" Value="12"/><Setter Property="Margin" Value="0,0,0,12"/></Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+
+        <!-- ════ ENCABEZADO ════ -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Background="{DynamicResource MaterialDesign.Brush.Primary}" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding TipoTexto}" Foreground="White" FontWeight="Bold" FontSize="13" FontFamily="Montserrat"/>
+                </Border>
+                <TextBlock Text="Liquidación de concentrado" FontFamily="Montserrat" FontWeight="SemiBold" FontSize="17" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                <TextBlock Text="{Binding NumeroLiquidacion, StringFormat='· {0}'}" Opacity="0.55" FontSize="13" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="Cancelar" Style="{StaticResource MaterialDesignFlatButton}" Command="{Binding CancelarCommand}"/>
+        </Grid>
+
+        <!-- ════ CUERPO: ENTRADAS (izq) + RESULTADO FIJO (der) ════ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="1.55*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+
+            <!-- ── ENTRADAS ── -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="2,0,12,0">
+                <StackPanel>
+
+                    <!-- Cliente y lote -->
+                    <materialDesign:Card Style="{StaticResource CardBox}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Sec}" Text="Cliente y lote"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="Nombre del cliente"/>
+                                    <TextBox Style="{StaticResource FI}" CharacterCasing="Upper" BorderBrush="{Binding ClienteNombre, Converter={StaticResource Req}}" Text="{Binding ClienteNombre, UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Procedencia"/>
+                                    <TextBox Style="{StaticResource FI}" CharacterCasing="Upper" Text="{Binding Procedencia, UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="Liquidación N° (automático)"/>
+                                    <TextBox Style="{StaticResource FI}" CharacterCasing="Upper" IsReadOnly="True" Opacity="0.7" Text="{Binding NumeroLiquidacion}"/></StackPanel>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="N° NIT / NIM / CI"/>
+                                    <TextBox Style="{StaticResource FI}" Text="{Binding ClienteCi, UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Concesión minera"/>
+                                    <TextBox Style="{StaticResource FI}" CharacterCasing="Upper" Text="{Binding ConcesionMinera, UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="Municipio"/>
+                                    <TextBox Style="{StaticResource FI}" CharacterCasing="Upper" Text="{Binding Municipio, UpdateSourceTrigger=PropertyChanged}"/></StackPanel>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="Fecha de entrega"/>
+                                    <DatePicker Margin="0,0,10,10" Foreground="{DynamicResource MaterialDesign.Brush.Foreground}" Style="{StaticResource MaterialDesignOutlinedDatePicker}" SelectedDate="{Binding FechaEntrega}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Fecha de liquidación"/>
+                                    <DatePicker Margin="0,0,10,10" Foreground="{DynamicResource MaterialDesign.Brush.Foreground}" Style="{StaticResource MaterialDesignOutlinedDatePicker}" SelectedDate="{Binding FechaLiquidacion}"/></StackPanel>
+                                <StackPanel Grid.Column="2"/>
+                            </Grid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Análisis del lote -->
+                    <materialDesign:Card Style="{StaticResource CardBox}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Sec}" Text="Análisis del lote"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="TMH (peso húmedo)"/>
+                                    <TextBox Style="{StaticResource NUM}" BorderBrush="{Binding Tmh, Converter={StaticResource Req}}" Text="{Binding Tmh, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Humedad (%)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding PorcentajeHumedad, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="Merma (%)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding PorcentajeMerma, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                            </Grid>
+                            <!-- Leyes ZN-AG -->
+                            <Grid Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="Ley ZN (%)"/>
+                                    <TextBox Style="{StaticResource NUM}" BorderBrush="{Binding LeyZn, Converter={StaticResource Req}}" Text="{Binding LeyZn, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Ley AG (g·oz, sin %)"/>
+                                    <TextBox Style="{StaticResource NUM}" BorderBrush="{Binding LeyAg, Converter={StaticResource Req}}" Text="{Binding LeyAg, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="2"/>
+                            </Grid>
+                            <!-- Leyes AG-PB -->
+                            <Grid Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="Ley AG (g·oz, sin %)"/>
+                                    <TextBox Style="{StaticResource NUM}" BorderBrush="{Binding LeyAg, Converter={StaticResource Req}}" Text="{Binding LeyAg, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Ley PB (%)"/>
+                                    <TextBox Style="{StaticResource NUM}" BorderBrush="{Binding LeyPb, Converter={StaticResource Req}}" Text="{Binding LeyPb, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="2"/>
+                            </Grid>
+                            <TextBlock Style="{StaticResource FL}" Text="IMPUREZAS (%)" Margin="0,4,0,6" FontWeight="SemiBold" Opacity="0.5"/>
+                            <!-- Impurezas ZN-AG -->
+                            <Grid Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="Fe"/><TextBox Style="{StaticResource NUM}" Text="{Binding Fe, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="As"/><TextBox Style="{StaticResource NUM}" Text="{Binding As, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="Sb"/><TextBox Style="{StaticResource NUM}" Text="{Binding Sb, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="3"><TextBlock Style="{StaticResource FL}" Text="Sn"/><TextBox Style="{StaticResource NUM}" Text="{Binding Sn, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="4"><TextBlock Style="{StaticResource FL}" Text="SiO2"/><TextBox Style="{StaticResource NUM}" Text="{Binding SiO2, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                            </Grid>
+                            <!-- Impurezas AG-PB -->
+                            <Grid Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="As"/><TextBox Style="{StaticResource NUM}" Text="{Binding As, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Sb"/><TextBox Style="{StaticResource NUM}" Text="{Binding Sb, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="Bi"/><TextBox Style="{StaticResource NUM}" Text="{Binding Bi, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="3"><TextBlock Style="{StaticResource FL}" Text="Sn"/><TextBox Style="{StaticResource NUM}" Text="{Binding Sn, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="4"><TextBlock Style="{StaticResource FL}" Text="SiO2"/><TextBox Style="{StaticResource NUM}" Text="{Binding SiO2, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="5"><TextBlock Style="{StaticResource FL}" Text="Zn"/><TextBox Style="{StaticResource NUM}" Text="{Binding ZnImpureza, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Cotizaciones y T/C -->
+                    <materialDesign:Card Style="{StaticResource CardBox}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Sec}" Text="Cotizaciones, T/C y alícuotas"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}"><TextBlock Style="{StaticResource FL}" Text="Cotización ZN ($/lb)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding CotizZnLb, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="0" Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}"><TextBlock Style="{StaticResource FL}" Text="Cotización PB ($/lb)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding CotizPbLb, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Cotización AG ($/oz)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding CotizAgOz, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="T/C Oficial"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding TcOficial, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="3"><TextBlock Style="{StaticResource FL}" Text="T/C Comercial"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding TcComercial, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}"><TextBlock Style="{StaticResource FL}" Text="Alícuota ZN (%)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding AlicuotaZn, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="0" Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}"><TextBlock Style="{StaticResource FL}" Text="Alícuota PB (%)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding AlicuotaPb, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Alícuota AG (%)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding AlicuotaAg, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                <StackPanel Grid.Column="2" Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}"><TextBlock Style="{StaticResource FL}" Text="Reg. ZN ($/lb)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding CotizRegaliaZn, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="2" Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}"><TextBlock Style="{StaticResource FL}" Text="Reg. PB ($/lb)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding CotizRegaliaPb, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                <StackPanel Grid.Column="3"><TextBlock Style="{StaticResource FL}" Text="Reg. AG ($/oz)"/>
+                                    <TextBox Style="{StaticResource NUM}" Text="{Binding CotizRegaliaAg, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Deducciones -->
+                    <materialDesign:Card Style="{StaticResource CardBox}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Sec}" Text="Deducciones que se aplican"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <!-- columna izq -->
+                                <StackPanel Grid.Column="0">
+                                    <CheckBox Style="{StaticResource Chk}" Content="Regalía minera ZN" IsChecked="{Binding AplicaRegaliaZn}" Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}" Margin="0,3"/>
+                                    <CheckBox Style="{StaticResource Chk}" Content="Regalía minera AG" IsChecked="{Binding AplicaRegaliaAg}" Margin="0,3"/>
+                                    <CheckBox Style="{StaticResource Chk}" Content="Regalía minera PB" IsChecked="{Binding AplicaRegaliaPb}" Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}" Margin="0,3"/>
+                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="COMIBOL" IsChecked="{Binding AplicaComibol}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding TasaComibol, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></Grid>
+                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="C.N.S." IsChecked="{Binding AplicaCns}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding TasaCns, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></Grid>
+                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="FEDECOMIN" IsChecked="{Binding AplicaFedecomin}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding TasaFedecomin, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></Grid>
+                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="FENCOMIN" IsChecked="{Binding AplicaFencomin}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding TasaFencomin, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></Grid>
+                                </StackPanel>
+                                <!-- columna der -->
+                                <StackPanel Grid.Column="2">
+                                    <Grid Margin="0,3" Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="C. Wilstermann" IsChecked="{Binding AplicaWilstermann}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding TasaWilstermann, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></Grid>
+                                    <Grid Margin="0,3" Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="M-02" IsChecked="{Binding AplicaM02}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding TasaM02, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></Grid>
+                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="Aporte cooperativa" IsChecked="{Binding AplicaAporteCoop}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding TasaAporteCoop, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></Grid>
+                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="Comisión bancaria" IsChecked="{Binding AplicaComisionBancaria}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding ComisionBancariaTasa, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></Grid>
+                                    <Grid Margin="0,3" Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="Rollback ($us/TMH)" IsChecked="{Binding AplicaRollback}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding Rollback, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.##\}, ConverterCulture=en-US}"/></Grid>
+                                    <Grid Margin="0,3" Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="Transporte ($us/TMH)" IsChecked="{Binding AplicaTransporte}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding TransporteTerrestre, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.##\}, ConverterCulture=en-US}"/></Grid>
+                                    <Grid Margin="0,3" Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="AHK ($us/TMH)" IsChecked="{Binding AplicaAhk}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding Ahk, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.##\}, ConverterCulture=en-US}"/></Grid>
+                                    <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource Chk}" Content="Molienda ($us/TMH)" IsChecked="{Binding AplicaMolienda}"/>
+                                        <TextBox Grid.Column="1" Style="{StaticResource Rate}" Text="{Binding Molienda, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.##\}, ConverterCulture=en-US}"/></Grid>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Margin="0,8,0,0" HorizontalAlignment="Left">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <StackPanel><TextBlock Style="{StaticResource FL}" Text="Anticipo (Bs)"/>
+                                    <TextBox Style="{StaticResource NUM}" Width="180" HorizontalAlignment="Left" Text="{Binding Anticipo, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Avanzado (plegable) -->
+                    <materialDesign:Card Style="{StaticResource CardBox}">
+                        <Expander Background="Transparent" Foreground="{DynamicResource MaterialDesign.Brush.Foreground}">
+                            <Expander.Header>
+                                <TextBlock Style="{StaticResource Sec}" Margin="0" Text="Parámetros avanzados (maquila, factores, libres, penalidades)"/>
+                            </Expander.Header>
+                            <StackPanel Margin="0,10,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="Maquila base"/><TextBox Style="{StaticResource NUM}" Text="{Binding MaquilaBase, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                    <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="Maquila $us"/><TextBox Style="{StaticResource NUM}" Text="{Binding MaquilaFijo, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="Escalador"/><TextBox Style="{StaticResource NUM}" Text="{Binding MaquilaEscalador, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                    <StackPanel Grid.Column="3"><TextBlock Style="{StaticResource FL}" Text="Otros ajuste $us"/><TextBox Style="{StaticResource NUM}" Text="{Binding OtrosAjusteUs, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                </Grid>
+                                <Grid Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="ZN libre (%)"/><TextBox Style="{StaticResource NUM}" Text="{Binding ZnLibre, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                    <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="ZN factor (%)"/><TextBox Style="{StaticResource NUM}" Text="{Binding ZnFactor, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="AG libre (oz)"/><TextBox Style="{StaticResource NUM}" Text="{Binding AgLibreOz, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                    <StackPanel Grid.Column="3"><TextBlock Style="{StaticResource FL}" Text="AG factor (%)"/><TextBox Style="{StaticResource NUM}" Text="{Binding AgFactor, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                </Grid>
+                                <Grid Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"><TextBlock Style="{StaticResource FL}" Text="AG libre (oz)"/><TextBox Style="{StaticResource NUM}" Text="{Binding AgLibreOz, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/></StackPanel>
+                                    <StackPanel Grid.Column="1"><TextBlock Style="{StaticResource FL}" Text="AG factor (%)"/><TextBox Style="{StaticResource NUM}" Text="{Binding AgFactor, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Style="{StaticResource FL}" Text="PB libre (%)"/><TextBox Style="{StaticResource NUM}" Text="{Binding PbLibre, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                    <StackPanel Grid.Column="3"><TextBlock Style="{StaticResource FL}" Text="PB factor (%)"/><TextBox Style="{StaticResource NUM}" Text="{Binding PbFactor, UpdateSourceTrigger=LostFocus, Converter={StaticResource Pct}}"/></StackPanel>
+                                </Grid>
+                                <StackPanel Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Style="{StaticResource FL}" Text="Refinación AG ($/oz)"/>
+                                    <TextBox Style="{StaticResource NUM}" HorizontalAlignment="Left" Width="160" Text="{Binding RefinacionAgPorOz, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.####\}, ConverterCulture=en-US}"/>
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource FL}" Text="PENALIDADES (límite libre % · tarifa $us)" Margin="0,6,0,4" FontWeight="SemiBold" Opacity="0.5"/>
+                                <DataGrid ItemsSource="{Binding Penalidades}" AutoGenerateColumns="False" CanUserAddRows="False"
+                                          HeadersVisibility="Column" GridLinesVisibility="Horizontal" Background="Transparent" RowBackground="Transparent" MaxHeight="200">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="IMPUREZA" Binding="{Binding Nombre}" IsReadOnly="True" Width="*"/>
+                                        <DataGridTextColumn Header="LÍMITE LIBRE (%)" Binding="{Binding Libre, Converter={StaticResource Pct}}" Width="150"/>
+                                        <DataGridTextColumn Header="TARIFA $us" Binding="{Binding Tarifa, StringFormat=\{0:0.####\}}" Width="120"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Expander>
+                    </materialDesign:Card>
+
+                    <TextBlock Text="{Binding MensajeError}" Foreground="#E57373" FontSize="12" Margin="2,0,0,8" TextWrapping="Wrap"
+                               Visibility="{Binding TieneError, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ── RESULTADO FIJO ── -->
+            <StackPanel Grid.Column="2">
+                <Border Background="{DynamicResource MaterialDesign.Brush.Primary}" CornerRadius="14" Padding="20,16" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="LÍQUIDO PAGABLE" Foreground="White" Opacity="0.85" FontSize="12" FontFamily="Montserrat"/>
+                        <TextBlock Text="{Binding ResLiquidoPagableBs, StringFormat='Bs {0:N2}'}" Foreground="White" FontSize="30" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding ResLiquidoPagableUs, StringFormat='$us {0:N2}'}" Foreground="White" FontSize="14" Opacity="0.9"/>
+                        <Separator Margin="0,10" Background="White" Opacity="0.3"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Saldo a pagar" Foreground="White" Opacity="0.9" FontSize="13" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding ResSaldoPagarBs, StringFormat='Bs {0:N2}'}" Foreground="White" FontSize="15" FontWeight="SemiBold"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Button Command="{Binding CalcularCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource MaterialDesign.Brush.Primary}" Margin="0,0,0,8" Height="42">
+                    <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Calculator" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center"/><TextBlock Text="CALCULAR" VerticalAlignment="Center" FontWeight="SemiBold"/></StackPanel>
+                </Button>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Command="{Binding GuardarCommand}" Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="ContentSave" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Guardar" VerticalAlignment="Center"/></StackPanel>
+                    </Button>
+                    <Button Grid.Column="2" Command="{Binding GenerarReciboCommand}" Style="{StaticResource MaterialDesignOutlinedButton}">
+                        <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="FilePdfBox" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Recibo" VerticalAlignment="Center"/></StackPanel>
+                    </Button>
+                </Grid>
+
+                <materialDesign:Card Style="{StaticResource CardBox}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Sec}" Text="Desglose"/>
+                        <Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="TMS (peso neto seco)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResTms, StringFormat=N3}"/></Grid>
+                        <Grid Margin="0,2" Visibility="{Binding EsZnAg, Converter={StaticResource BoolToVis}}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Pagable ZN ($us)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResPagableZn, StringFormat=N2}"/></Grid>
+                        <Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Pagable AG ($us)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResPagableAg, StringFormat=N2}"/></Grid>
+                        <Grid Margin="0,2" Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Pagable PB ($us)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResPagablePb, StringFormat=N2}"/></Grid>
+                        <Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Maquila ($us)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResMaquila, StringFormat=N2}"/></Grid>
+                        <Grid Margin="0,2" Visibility="{Binding EsAg, Converter={StaticResource BoolToVis}}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Refinación ($us)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResRefinacion, StringFormat=N2}"/></Grid>
+                        <Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Penalidades ($us)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResPenalidades, StringFormat=N2}"/></Grid>
+                        <Separator Margin="0,6" Opacity="0.3"/>
+                        <Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Valor FOB (Bs)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResValorFobBs, StringFormat=N2}"/></Grid>
+                        <Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Total retenciones (Bs)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding ResTotalRetenciones, StringFormat=N2}"/></Grid>
+                        <Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource CLbl}" Text="Anticipo (Bs)"/><TextBlock Grid.Column="1" Style="{StaticResource CVal}" Text="{Binding Anticipo, StringFormat=N2}"/></Grid>
+                        <Separator Margin="0,8" Opacity="0.3"/>
+                        <Button Content="Cargar datos de muestra (comparar con Excel)" Command="{Binding CargarMuestraCommand}" FontSize="11" Style="{StaticResource MaterialDesignFlatButton}" HorizontalAlignment="Left" Padding="2,0"/>
+                    </StackPanel>
+                </materialDesign:Card>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

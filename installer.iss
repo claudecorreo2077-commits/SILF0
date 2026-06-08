@@ -1,10 +1,14 @@
 ; Ruta: D:\ARCHIVOS\POTOSI\SILF\installer.iss
 ; Script de Inno Setup para SILF
-; Compilar con: Inno Setup Compiler (Ctrl+F9)
+; Compilar con: Inno Setup Compiler (Ctrl+F9)  o  ISCC.exe installer.iss
+;
+; PASO PREVIO OBLIGATORIO (genera la carpeta publish\SILF que este script empaqueta):
+;   dotnet publish SILF.App\SILF.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o publish\SILF
 
 #define MyAppName "SILF"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "SILF - Sistema Integral de Liquidación y Flotación"
+#define MyAppPublisher "picosoft"
+#define MyAppEmail "krlosdelfin@gmail.com"
 #define MyAppExeName "SILF.App.exe"
 #define MyAppDescription "Sistema Integral de Liquidación y Flotación"
 
@@ -12,13 +16,32 @@
 AppId={{B8F2A3D1-7E4C-4A9B-8D5F-1C2E3F4A5B6C}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+AppVerName={#MyAppName} {#MyAppVersion}
+
+; ── Datos del desarrollador (visibles en "Programas y características" y soporte) ──
 AppPublisher={#MyAppPublisher}
+AppPublisherURL=mailto:{#MyAppEmail}
+AppSupportURL=mailto:{#MyAppEmail}
+AppUpdatesURL=mailto:{#MyAppEmail}
+AppContact={#MyAppEmail}
+
+; ── Metadatos incrustados en el propio Setup.exe (clic derecho > Propiedades > Detalles) ──
+VersionInfoVersion={#MyAppVersion}.0
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription={#MyAppName} - Instalador
+VersionInfoCopyright=© 2026 {#MyAppPublisher}
+VersionInfoProductName={#MyAppName}
+VersionInfoProductVersion={#MyAppVersion}.0
+
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir=.\installer_output
 OutputBaseFilename=SILF_Setup_{#MyAppVersion}
 SetupIconFile=SILF.App\Assets\Icons\icono.ico
+; ── Imágenes del asistente (marca picosoft) ──
+WizardImageFile=setup\wizard-large.bmp
+WizardSmallImageFile=setup\wizard-small.bmp
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -28,7 +51,6 @@ UninstallDisplayName={#MyAppName} - {#MyAppDescription}
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
-
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 
@@ -37,9 +59,9 @@ Name: "desktopicon"; Description: "Crear acceso directo en el &Escritorio"; Grou
 Name: "startmenu"; Description: "Crear acceso en el &Menú Inicio"; GroupDescription: "Accesos directos:"
 
 [Files]
-; Copiar toda la carpeta publicada
+; Copiar toda la carpeta publicada (incluye el runtime .NET autocontenido)
 Source: "publish\SILF\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-; Ícono de la app
+; Ícono de la app (para los accesos directos)
 Source: "SILF.App\Assets\Icons\icono.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -52,34 +74,23 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 Filename: "{app}\{#MyAppExeName}"; Description: "Ejecutar {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; Limpiar archivos generados por la app (BD, logos, etc.)
+; Limpiar archivos generados por la app (BD, logos, etc.) al desinstalar.
+; OJO: esto borra la base de datos y los logos. Para una reinstalación que conserve
+; datos, comentá estas dos líneas.
 Type: filesandordirs; Name: "{app}\Assets"
 Type: files; Name: "{app}\silf.db"
 
 [Code]
-// Verificar si la app está corriendo antes de instalar/desinstalar
-function IsAppRunning(): Boolean;
-var
-  ResultCode: Integer;
-begin
-  Result := False;
-  if Exec('tasklist', '/FI "IMAGENAME eq SILF.App.exe" /NH', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-  begin
-    // tasklist siempre retorna 0, verificamos por otro medio
-  end;
-end;
-
 function InitializeSetup(): Boolean;
 begin
   Result := True;
-  // Mensaje de bienvenida personalizado
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    // Post-instalación: crear directorio para Assets si no existe
+    // Asegurar el directorio de imágenes/logos de la empresa
     ForceDirectories(ExpandConstant('{app}\Assets\Images'));
   end;
 end;

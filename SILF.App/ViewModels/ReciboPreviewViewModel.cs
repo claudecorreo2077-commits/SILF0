@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\ReciboPreviewViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\ReciboPreviewViewModel.cs
 using System.Globalization;
 using System.IO;
 using System.Windows;

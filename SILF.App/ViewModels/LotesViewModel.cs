@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LotesViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LotesViewModel.cs
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -37,10 +37,8 @@ public partial class LotesViewModel : BaseViewModel
     [ObservableProperty] private LoteResumen? _loteSeleccionado;
     [ObservableProperty] private bool _sinResultados;
 
-    // ── Proceso de Flotación actual (solo informativo en esta vista) ──
-    // El botón FLOTAR (cortar proceso) vive en el módulo Inv. Flotación.
-    [ObservableProperty] private int _numeroProcesoActual;
-    [ObservableProperty] private DateTime _fechaAperturaProceso;
+    // ── Banda informativa (ya no hay "proceso abierto"; las flotaciones se arman
+    //    manualmente en Inv. Flotación). Mostramos un resumen neutral. ──
     [ObservableProperty] private string _indicadorProcesoTexto = "Cargando...";
 
     partial void OnFiltroEstadoSeleccionadoChanged(string value) => AplicarFiltros();
@@ -55,28 +53,9 @@ public partial class LotesViewModel : BaseViewModel
             using var scope = App.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SilfDbContext>();
 
-            // Cargar proceso activo (para mostrar en la banda informativa)
-            var procesoActivo = await db.ProcesosFlotacion
-                .Where(p => p.Estado == EstadoProcesoFlotacion.Abierto)
-                .OrderByDescending(p => p.NumeroProceso)
-                .FirstOrDefaultAsync();
-
-            if (procesoActivo != null)
-            {
-                NumeroProcesoActual = procesoActivo.NumeroProceso;
-                FechaAperturaProceso = procesoActivo.FechaApertura;
-                IndicadorProcesoTexto =
-                    $"Trabajando en el Proceso #{procesoActivo.NumeroProceso}  ·  Abierto desde {procesoActivo.FechaApertura:dd/MM/yyyy HH:mm}  ·  El corte se hace desde Inv. Flotación";
-            }
-            else
-            {
-                IndicadorProcesoTexto = "⚠ Sin proceso abierto — abrir uno desde Inv. Flotación";
-            }
-
-            // Cargar lotes del proceso activo
+            // Cargar TODOS los lotes (ya no se particionan por proceso de flotación).
             _todosLosLotes = await db.Lotes
                 .Include(l => l.Proveedor).Include(l => l.Mina)
-                .Where(l => procesoActivo == null || l.ProcesoFlotacionId == procesoActivo.Id)
                 .OrderByDescending(l => l.FechaRegistro)
                 .Select(l => new LoteResumen
                 {
@@ -84,6 +63,12 @@ public partial class LotesViewModel : BaseViewModel
                     NombreMina = l.Mina.Nombre, PesoNeto = l.PesoNeto, Estado = l.Estado,
                     TipoMineral = l.TipoMineral, FechaRegistro = l.FechaRegistro
                 }).ToListAsync();
+
+            var total = _todosLosLotes.Count;
+            var liquidados = _todosLosLotes.Count(l => l.Estado == EstadoLote.Liquidado || l.Estado == EstadoLote.Completado);
+            IndicadorProcesoTexto =
+                $"{total} lote{(total == 1 ? "" : "s")} registrado{(total == 1 ? "" : "s")}  ·  " +
+                $"{liquidados} liquidado{(liquidados == 1 ? "" : "s")}  ·  Las flotaciones se arman en Inv. Flotación";
 
             AplicarFiltros();
         }
@@ -174,6 +159,8 @@ public partial class LotesViewModel : BaseViewModel
             if (empresa != null && !string.IsNullOrEmpty(empresa.LogoPath) && File.Exists(empresa.LogoPath))
                 logo = await File.ReadAllBytesAsync(empresa.LogoPath);
 
+            // El anticipo se emite antes de cualquier flotación, por eso el lote puede
+            // no tener proceso asignado todavía (NumeroProceso = 0 en ese caso).
             var data = new ReciboAnticipoData
             {
                 EmpresaNombre = empresa?.RazonSocial ?? "",
@@ -192,7 +179,7 @@ public partial class LotesViewModel : BaseViewModel
 
             var sfd = new SaveFileDialog
             {
-                FileName = $"ReciboAnticipo_P{data.NumeroProceso:00}-L{data.NumeroLote:000}.pdf",
+                FileName = $"ReciboAnticipo_Lote{data.NumeroLote:000}.pdf",
                 Filter = "PDF (*.pdf)|*.pdf",
                 Title = "Guardar Recibo de Anticipo"
             };

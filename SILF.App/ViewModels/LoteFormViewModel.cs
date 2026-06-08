@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LoteFormViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\LoteFormViewModel.cs
 using System.Collections.ObjectModel;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -221,27 +221,14 @@ public partial class LoteFormViewModel : BaseViewModel
             else
             {
                 // ── NUEVO LOTE ──
-                // 1) Obtener el proceso abierto (debe haber siempre uno por la migración).
-                var procesoActivo = await db.ProcesosFlotacion
-                    .Where(p => p.Estado == EstadoProcesoFlotacion.Abierto)
-                    .OrderByDescending(p => p.NumeroProceso)
-                    .FirstOrDefaultAsync();
-
-                if (procesoActivo == null)
-                {
-                    MostrarErr("No hay un proceso de flotación abierto. Reinicie la app para crear uno automáticamente.");
-                    return;
-                }
-
-                // 2) Correlativo DENTRO del proceso (reinicia con cada nuevo proceso).
-                var ult = await db.Lotes
-                    .Where(l => l.ProcesoFlotacionId == procesoActivo.Id)
-                    .MaxAsync(l => (int?)l.NumeroLote) ?? 0;
+                // El lote nace SIN flotación (ProcesoFlotacionId = null): queda "disponible".
+                // NumeroLote = correlativo GLOBAL (máximo + 1), fijo de por vida.
+                var ult = await db.Lotes.MaxAsync(l => (int?)l.NumeroLote) ?? 0;
 
                 var lote = new Lote
                 {
                     NumeroLote = ult + 1,
-                    ProcesoFlotacionId = procesoActivo.Id,
+                    ProcesoFlotacionId = null,   // se asignará al agruparlo en una flotación
                     FechaRegistro = FormFechaIngreso, ProveedorId = provId, MinaId = FormMina.Id,
                     TipoMineral = tipo, PesoBruto = FormPesoBruto, Tara = FormTara, PesoNeto = FormPesoNeto,
                     NombreChofer = FormChofer.Trim().ToUpper(), CiChofer = FormCiChofer.Trim(),

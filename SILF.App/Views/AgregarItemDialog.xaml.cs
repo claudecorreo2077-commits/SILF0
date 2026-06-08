@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\AgregarItemDialog.xaml.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Views\AgregarItemDialog.xaml.cs
 using System.Windows;
 
 namespace SILF.App.Views;

@@ -1,4 +1,4 @@
-namespace SILF.Core.Enums;
+﻿namespace SILF.Core.Enums;
 
 /// <summary>
 /// Estados del ciclo de vida de un lote de mineral.

@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Recovery\Program.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Recovery\Program.cs
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.Sqlite;

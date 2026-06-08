@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\QrHelper.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Reports\QrHelper.cs
 using QRCoder;
 
 namespace SILF.Reports;

@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\UsuariosViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\UsuariosViewModel.cs
 using System.Collections.ObjectModel;
 using System.Security.Cryptography;
 using System.Text;

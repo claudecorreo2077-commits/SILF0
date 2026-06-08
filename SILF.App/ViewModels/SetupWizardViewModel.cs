@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\SetupWizardViewModel.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\ViewModels\SetupWizardViewModel.cs
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;

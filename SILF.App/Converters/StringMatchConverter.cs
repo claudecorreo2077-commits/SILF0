@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Converters\StringMatchConverter.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.App\Converters\StringMatchConverter.cs
 using System.Globalization;
 using System.Windows.Data;
 

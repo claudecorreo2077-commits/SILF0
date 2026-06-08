@@ -1,4 +1,4 @@
-// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Enums\EstadoProcesoFlotacion.cs
+﻿// Ruta: D:\ARCHIVOS\POTOSI\SILF\SILF.Core\Enums\EstadoProcesoFlotacion.cs
 namespace SILF.Core.Enums;
 
 /// <summary>
